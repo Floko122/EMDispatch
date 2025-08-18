@@ -409,7 +409,7 @@ function openAssignModal(eventObj) {
   }
 
   // Base list = status 1 or 2
-  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2);
+  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2 || v.status == 3);//3 allows reassignment
 
   // Render helper (keeps checked boxes)
   function renderList(first=false) {
@@ -508,7 +508,7 @@ function renderVehicles() {
         const gt = document.createElement('div');
         gt.className = 'meta'; gt.textContent = `— ${gname}`;
         container.appendChild(gt);
-        matches.forEach(v => container.appendChild(vehicleItem(v)));
+        matches.forEach(v => container.appendChild(vehicleItem(v,s)));
         const matchIds = new Set(matches.map(m=>m.id));
         items = items.filter(v => !matchIds.has(v.id));
       }
@@ -518,16 +518,20 @@ function renderVehicles() {
         container.appendChild(gt);
       }
     }
-    items.forEach(v => container.appendChild(vehicleItem(v)));
+    items.forEach(v => container.appendChild(vehicleItem(v,s)));
   }
 }
-function vehicleItem(v) {
+async function sendHome(vehicle_id){
+  var vehicle_ids = [vehicle_id];
+  await api('events_unassign', {vehicle_ids});
+}
+function vehicleItem(v,s) {
   const el = document.createElement('div');
   el.className = 'item';
   const label = v.name || v.type || v.game_vehicle_id || ('Vehicle #' + v.id);
   const player = (state.players.find(p => p.id === v.assigned_player_id)?.name) || '—';
   el.innerHTML = `
-    <div><b>${label}</b></div>
+    <div><b>${label}</b>${s==3?`<button onclick='sendHome(${v.id}).then(() => this.remove())'>Send Home</button>`:""}</div>
     <div class="meta">id:${v.id} • status:${v.status} • pos:${Math.round(v.x)},${Math.round(v.y)} • player:${player}</div>
   `;
   return el;

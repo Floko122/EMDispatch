@@ -433,6 +433,52 @@ try {
             respond_json(200, ['ok'=>true]);
             break;
 
+        case 'events_unassign':
+            $data = get_json_input();
+            $token = $data['session_token'] ?? null;
+            $session = require_session($pdo, $token);
+            $sid = $session['id'];
+
+            $vehicle_ids = $data['vehicle_ids'] ?? [];
+            if (!is_array($vehicle_ids) || count($vehicle_ids) === 0) {
+                respond_json(400, ['error' => 'Missing vehicle_ids']);
+            }
+
+            // Prepared lookups
+            $vehLookup = $pdo->prepare('SELECT id, game_vehicle_id FROM vehicles WHERE id = ? AND session_id = ?');
+
+            $pdo->beginTransaction();
+            foreach ($vehicle_ids as $vid) {
+                // Verify vehicle belongs to this session and fetch game_vehicle_id for payload
+                $vehLookup->execute([$vid, $sid]);
+                $veh = $vehLookup->fetch();
+                if (!$veh) {
+                    // Skip unknown vehicle id (mirror events_assign behavior)
+                    continue;
+                }
+
+                $stmt = $pdo->prepare('DELETE FROM assignments WHERE session_id = ? and vehicle_id = ?');
+                $stmt->execute([$sid, $vid]);
+
+                // Emit a command so the game client can react
+                $payload = [
+                    'event_id' => -1,
+                    'vehicle_id' => (int)$vid,
+                    'game_vehicle_id' => $veh['game_vehicle_id'],
+                    'assign_to_player_id' => null
+                ];
+                $stmt = $pdo->prepare(query: 'INSERT INTO commands (session_id, type, payload) VALUES (?, ?, ?)');
+                $stmt->execute([$sid, 'unassign', json_encode($payload, JSON_UNESCAPED_UNICODE)]);
+            }
+            $pdo->commit();
+
+            log_activity($pdo, $sid, 'event', null, 'Units unassigned from event', [
+                'vehicle_ids' => $vehicle_ids
+            ]);
+            respond_json(200, ['ok' => true]);
+            break;
+
+
         case 'vehicles_assign_player':
             $data = get_json_input();
             $token = $data['session_token'] ?? null;
