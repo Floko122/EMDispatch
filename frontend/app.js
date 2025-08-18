@@ -252,7 +252,6 @@ function worldToCanvas(pt) {
   const d = imageDrawRect();
   const x = d.x + nx * d.w;
   const y = (d.y + ny * d.h);
-  console.log(x,y);
   return { x, y };
 }
 function toScreen(p) { return { x: p.x * state.zoom + state.pan.x, y: p.y * state.zoom + state.pan.y }; }
@@ -413,11 +412,10 @@ function openAssignModal(eventObj) {
   const base = state.vehicles.filter(v => v.status == 1 || v.status == 2);
 
   // Render helper (keeps checked boxes)
-  function renderList() {
-    const prevChecked = new Set(
+  function renderList(first=false) {
+    const prevChecked = first==true ? new Set() : new Set(
       Array.from(cont.querySelectorAll('input[type=checkbox]:checked')).map(b => +b.value)
     );
-
     const q = sbox.value.trim();
     let rex = null, isRegex = false;
 
@@ -440,10 +438,11 @@ function openAssignModal(eventObj) {
     };
 
     cont.innerHTML = '';
-    base.filter(matches).forEach(v => {
+    base.forEach(v => {
+      const display_mode = `style = "display:${matches(v)?"block":"none"}"`
       const id = 'veh_' + v.id;
       const row = document.createElement('div');
-      row.innerHTML = `<label><input type="checkbox" value="${v.id}" id="${id}"/> ${v.name || v.type || v.game_vehicle_id}
+      row.innerHTML = `<label ${display_mode}><input type="checkbox" value="${v.id}" id="${id}"/> ${v.name || v.type || v.game_vehicle_id}
                        <span class="meta">(status ${v.status})</span></label>`;
       const box = row.querySelector('input[type=checkbox]');
       if (prevChecked.has(v.id)) box.checked = true;
@@ -452,10 +451,9 @@ function openAssignModal(eventObj) {
   }
 
   // Initial render + live filtering
-  renderList();
+  renderList(true);
   sbox.oninput = renderList;
   sbox.focus();
-
   // Show modal
   modal.classList.remove('hidden');
 }
