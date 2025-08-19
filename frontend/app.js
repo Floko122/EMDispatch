@@ -279,7 +279,7 @@ function renderMap() {
     ctx.drawImage(mapImg, d.x, d.y, d.w, d.h);
   }
 
-  const fontSize = 12;
+  const fontSize = Math.min(12/(0.75*state.zoom),12);//Maximal old value, minimum 3px (as max zoom is 4 currently)
   ctx.font = `${fontSize}px sans-serif`;
   ctx.textBaseline = 'bottom';
   ctx.textAlign = 'center';
@@ -293,7 +293,8 @@ function renderMap() {
   for (const ev of state.events) {
     const p = worldToCanvas(ev);
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 10, 0, Math.PI*2);
+    const diameter = Math.min(10/state.zoom,10);
+    ctx.arc(p.x, p.y, diameter, 0, Math.PI*2);
     ctx.fillStyle = '#6ea8fe';
     ctx.fill();
     ctx.lineWidth = 2 / state.zoom;
@@ -303,8 +304,8 @@ function renderMap() {
     const text = ev.name || 'Event';
     const tw = ctx.measureText(text).width;
     const th = fontSize;
-    const lx = p.x + 12;
-    const ly = p.y + 4;
+    const lx = p.x + diameter+2;
+    const ly = p.y + diameter/2 -1;
     ctx.lineWidth = 3 / state.zoom;
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
     ctx.fillStyle = '#e6ecff';
@@ -317,11 +318,12 @@ function renderMap() {
     pushRect({x: scrTopLeft.x - pad, y: scrTopLeft.y - pad, w: tw*state.zoom + 2*pad, h: th*state.zoom + 2*pad});
   }
 
+  const nodeOffset = Math.min(8/state.zoom,8);//Maximal old value, minimum 2px (as max zoom is 4 currently)
   for (const v of state.vehicles) {
     const p = worldToCanvas(v);
 
     ctx.beginPath();
-    ctx.moveTo(p.x, p.y-8); ctx.lineTo(p.x+8, p.y); ctx.lineTo(p.x, p.y+8); ctx.lineTo(p.x-8, p.y); ctx.closePath();
+    ctx.moveTo(p.x, p.y-nodeOffset); ctx.lineTo(p.x+nodeOffset, p.y); ctx.lineTo(p.x, p.y+nodeOffset); ctx.lineTo(p.x-nodeOffset, p.y); ctx.closePath();
     let fill = '#1dd1a1';
     if (v.status >= 3 && v.status <= 5) fill = '#ff9f43';
     if (v.status > 5) fill = '#ee5253';
@@ -331,15 +333,13 @@ function renderMap() {
 
     const text = v.name || v.type || v.game_vehicle_id || `#${v.id}`;
     const tw = ctx.measureText(text).width;
-    const th = 12;
+    const th = fontSize;
 
     const candidates = [
-      {dx: 0,  dy: -14},
-      {dx: 12, dy: -2},
-      {dx:-12, dy: -2},
-      {dx: 0,  dy: 14},
-      {dx: 12, dy: -14},
-      {dx:-12, dy: -14},
+      {dx: 0,  dy: -fontSize-nodeOffset+2},//Above center
+      {dx: 0,  dy: fontSize+nodeOffset+2},//Below center
+      {dx: -tw+nodeOffset,  dy: fontSize/2},//left
+      {dx: nodeOffset+tw/2+2,  dy: fontSize/2},//right
     ];
 
     for (const c of candidates) {
