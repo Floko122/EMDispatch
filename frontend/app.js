@@ -378,6 +378,8 @@ function openAssignModal(eventObj) {
   modalEvent = eventObj;
   $('#assignEventInfo').innerHTML =
     `<div><b>${eventObj.name}</b> @ (${eventObj.x.toFixed(1)}, ${eventObj.y.toFixed(1)})</div>`;
+    
+  loadAssignedVehiclesAsync(eventObj);
 
   // Players
   const sel = $('#assignPlayer');
@@ -458,7 +460,16 @@ function openAssignModal(eventObj) {
   modal.classList.remove('hidden');
 }
 
-
+async function loadAssignedVehiclesAsync(ev) {
+  const sel = $("#assignAssignedVehicles");
+  const result = await api('events_get_vehicles', {event_id: ev.id});
+  var names = result["vehicles"].map(e=>e.name).sort().join(", ");
+  if(names){
+    sel.innerHTML = `<h4>Assigned</h4><p>${names}</p>`;
+  }else{
+    sel.innerHTML = "";
+  }
+}
 
 async function submitAssign() {
   const sel = $('#assignVehicles');
