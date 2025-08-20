@@ -67,7 +67,20 @@ function upsert_vehicle($pdo, $session_id, $veh) {
         VALUES (?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE name = VALUES(name), type = VALUES(type), x = VALUES(x), y = VALUES(y), status = VALUES(status), updated_at = CURRENT_TIMESTAMP');
     $stmt->execute([$session_id, $veh['game_vehicle_id'], $veh['name'] ?? null, $veh['type'] ?? null, $veh['x'] ?? null, $veh['y'] ?? null, $veh['status'] ?? null]);
+
+    if($veh['status']==2){
+        $vid = get_vehicle_by_game_id($pdo,$session_id, $veh['game_vehicle_id'])["id"];
+        unassign_vehicle($pdo,$session_id, $vid);
+    }
+
     return get_vehicle_by_game_id($pdo, $session_id, $veh['game_vehicle_id']);
+}
+
+function unassign_vehicle($pdo, $session_id, $veh) {
+    // $veh: ['game_vehicle_id','name','type','x','y','status']
+    $stmt = $pdo->prepare('DELETE FROM assignments WHERE session_id = ? and vehicle_id = ?');
+    $stmt->execute([$session_id, $veh]);
+    return $stmt->rowCount();
 }
 
 function get_vehicle_by_game_id($pdo, $session_id, $game_vehicle_id) {

@@ -106,6 +106,7 @@ if(isset($_GET['session_token']))
       </div>
       <div class="modal-body">
         <div id="assignEventInfo"></div>
+        <div id="assignAssignedVehicles"></div>
         <div class="form-row">
           <label>Assign to Player:</label>
           <select id="assignPlayer">

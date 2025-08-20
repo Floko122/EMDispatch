@@ -403,7 +403,8 @@ try {
                     // Skip unknown vehicle id (or respond_json with 404 if you prefer hard fail)
                     continue;
                 }
-
+                unassign_vehicle($pdo,$sid, $vid);
+                
                 $stmt = $pdo->prepare('INSERT INTO assignments (session_id, event_id, vehicle_id, assigned_player_id, status)
                     VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE assigned_player_id = VALUES(assigned_player_id), status = VALUES(status), updated_at = CURRENT_TIMESTAMP');
@@ -432,6 +433,20 @@ try {
             ]);
             respond_json(200, ['ok'=>true]);
             break;
+            
+        case 'events_get_vehicles':
+            $data = get_json_input();
+            $token = $data['session_token'] ?? null;
+            $session = require_session($pdo, $token);
+            $sid = $session['id'];
+
+            $event_id = $data['event_id'] ?? null;
+            if (!$event_id) respond_json(400, ['error'=>'Missing event_id']);
+            $stmt = $pdo->prepare('SELECT vehicles.id, name FROM assignments join vehicles on vehicles.session_id = assignments.session_id and vehicles.id=assignments.vehicle_id WHERE assignments.event_id = ? AND assignments.session_id = ?');
+            $stmt->execute([$event_id, $sid]);
+            $vehicles = $stmt->fetchAll();
+            respond_json(200, ['ok'=>true,'vehicles'=>$vehicles]);
+            break;
 
         case 'events_unassign':
             $data = get_json_input();
@@ -457,8 +472,7 @@ try {
                     continue;
                 }
 
-                $stmt = $pdo->prepare('DELETE FROM assignments WHERE session_id = ? and vehicle_id = ?');
-                $stmt->execute([$sid, $vid]);
+                unassign_vehicle($pdo,$sid, $vid);
 
                 // Emit a command so the game client can react
                 $payload = [
