@@ -331,6 +331,10 @@ function renderMap() {
     ctx.lineWidth = 1.5 / state.zoom;
     ctx.strokeStyle = '#dfe7ff'; ctx.stroke();
 
+    if(v.status==2){
+      //No text on status2 (at Home)
+      continue;
+    }
     const text = v.name || v.type || v.game_vehicle_id || `#${v.id}`;
     const tw = ctx.measureText(text).width;
     const th = fontSize;
