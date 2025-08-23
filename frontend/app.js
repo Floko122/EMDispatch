@@ -371,7 +371,7 @@ function renderMap() {
 }
 
 const modal = $('#assignModal');
-$('#closeAssign').addEventListener('click', () => modal.classList.add('hidden'));
+$('#closeAssign').addEventListener('click', () => {modal.classList.add('hidden'); sendNotesAsync(modalEvent);});
 $('#submitAssign').addEventListener('click', submitAssign);
 let modalEvent = null;
 function openAssignModal(eventObj) {
@@ -380,6 +380,7 @@ function openAssignModal(eventObj) {
     `<div><b>${eventObj.name}</b> @ (${eventObj.x.toFixed(1)}, ${eventObj.y.toFixed(1)})</div>`;
     
   loadAssignedVehiclesAsync(eventObj);
+  loadNotesAsync(eventObj);
 
   // Players
   const sel = $('#assignPlayer');
@@ -465,10 +466,23 @@ async function loadAssignedVehiclesAsync(ev) {
   const result = await api('events_get_vehicles', {event_id: ev.id});
   var names = result["vehicles"].map(e=>e.name).sort().join(", ");
   if(names){
-    sel.innerHTML = `<h4>Assigned</h4><p>${names}</p>`;
+    sel.innerHTML = `<header>Assigned</header><p>${names}</p>`;
   }else{
     sel.innerHTML = "";
   }
+}
+
+async function loadNotesAsync(ev) {
+  const sel = $("#assignEventComments");
+  const result = await api('events_get_note', {event_id: ev.id});
+  var notes = result.notes.map(e=>e.content).join("<br>");
+  sel.value = notes;
+}
+
+async function sendNotesAsync(ev) {
+  if(!ev)return;
+  const sel = $("#assignEventComments");
+  const result = await api('events_set_note', {event_id: ev.id, content: sel.value});
 }
 
 async function submitAssign() {
@@ -478,6 +492,7 @@ async function submitAssign() {
   const vehicle_ids = boxes.map(b => parseInt(b.value, 10));
   const player_id = $('#assignPlayer').value ? parseInt($('#assignPlayer').value, 10) : null;
   try {
+    sendNotesAsync(modalEvent);
     await api('events_assign', {event_id: modalEvent.id, vehicle_ids, player_id});
     modal.classList.add('hidden');
     pushLogRow({created_at: new Date().toISOString(), type:'command', message:'Assigned vehicles to event', meta:{event_id: modalEvent.id, vehicle_ids}});

@@ -491,7 +491,37 @@ try {
             ]);
             respond_json(200, ['ok' => true]);
             break;
+        
+        case 'events_get_note':
+            $data = get_json_input();
+            $token = $data['session_token'] ?? null;
+            $event = $data['event_id'] ?? null;
+            $session = require_session($pdo, $token);
+            $sid = $session['id'];
 
+            if(!$token || !$event){
+                respond_json(400, ['error' => 'session_token, event_id needed']);
+            }
+            $stmt = $pdo->prepare('SELECT * FROM notes WHERE session_id = ? AND event_id = ?');
+            $stmt->execute([$sid, $event]);
+            $rows = $stmt->fetchAll();
+            respond_json(200, ['notes'=>$rows]);
+            break;
+            
+        case 'events_set_note':
+            $data = get_json_input();
+            $token = $data['session_token'] ?? null;
+            $event = $data['event_id'] ?? null;
+            $content = $data['content'] ?? null;
+            if(!$token || !$event || !$content){
+                respond_json(400, ['error' => 'session_token, event_id, content needed '.$data]);
+            }
+            $session = require_session($pdo, $token);
+
+            $sid = $session['id'];
+            $note = upsert_notes($pdo, $sid, $data);
+            respond_json(200, ['ok'=>true, 'note'=>$note]);
+            break;
 
         case 'vehicles_assign_player':
             $data = get_json_input();

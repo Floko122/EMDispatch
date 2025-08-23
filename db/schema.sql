@@ -116,9 +116,10 @@ CREATE TABLE IF NOT EXISTS notes (
   content TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_session_event (session_id, event_id),
-  CONSTRAINT fk_asg_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
-  CONSTRAINT fk_asg_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+  INDEX idx_session_note (session_id, event_id),
+  UNIQUE KEY uniq_note_game (session_id, event_id),
+  CONSTRAINT nt_asg_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+  CONSTRAINT nt_asg_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS commands (
