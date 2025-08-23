@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   game_vehicle_id VARCHAR(255) NOT NULL,
   name VARCHAR(255),
   type VARCHAR(255),
+  modes VARCHAR(255),
   x DOUBLE,
   y DOUBLE,
   status INT,
