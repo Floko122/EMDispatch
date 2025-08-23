@@ -97,7 +97,7 @@ body, textarea {
   padding: 8px; margin-bottom: 6px;
 }
 .item .meta { color: var(--muted); font-size: 12px; }
-.group-title { color: var(--muted); margin: 10px 0 4px; border-bottom: 1px dashed #2a3a74; padding-bottom: 4px; }
+.group-title { color: var(--muted); margin: 10px 0 4px; border-bottom: 1px dashed #2a3a74; padding-bottom: 4px; cursor:help;}
 
 /* Log */
 .log { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }

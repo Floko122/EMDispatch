@@ -502,6 +502,7 @@ async function submitAssign() {
   }
 }
 
+const status_visible = {};
 function renderVehicles() {
   const container = $('#vehiclesList');
   const byStatus = {};
@@ -516,10 +517,17 @@ function renderVehicles() {
   const grouping = state.grouping;
 
   for (const s of statuses) {
+    if(!(s in status_visible)){
+      status_visible[s]= s!=2;//state 2 is hidden by default
+    }
     const title = document.createElement('div');
-    title.className = 'group-title';
+    title.className = 'group-title collapsible';
+    title.onclick = function() { toggleCollapse(title,s); };
     title.textContent = `Status ${s}`;
     container.appendChild(title);
+    const box = document.createElement('div');
+    box.style.display = status_visible[s]?"block":"none";
+    container.appendChild(box);
 
     let items = byStatus[s];
 
@@ -533,18 +541,18 @@ function renderVehicles() {
         if (!matches.length) continue;
         const gt = document.createElement('div');
         gt.className = 'meta'; gt.textContent = `— ${gname}`;
-        container.appendChild(gt);
-        matches.forEach(v => container.appendChild(vehicleItem(v,s)));
+        box.appendChild(gt);
+        matches.forEach(v => box.appendChild(vehicleItem(v,s)));
         const matchIds = new Set(matches.map(m=>m.id));
         items = items.filter(v => !matchIds.has(v.id));
       }
       if (items.length) {
         const gt = document.createElement('div');
         gt.className = 'meta'; gt.textContent = '— Other';
-        container.appendChild(gt);
+        box.appendChild(gt);
       }
     }
-    items.forEach(v => container.appendChild(vehicleItem(v,s)));
+    items.forEach(v => box.appendChild(vehicleItem(v,s)));
   }
 }
 async function sendHome(vehicle_id){
@@ -690,6 +698,14 @@ async function pollLogs() {
       state.logsLastId = rows[rows.length - 1].id;
     }
   } catch {}
+}
+
+function toggleCollapse(node,state){
+    console.log("clicked");
+    node.classList.toggle("active");
+    var content = node.nextElementSibling;
+    status_visible[state] = content.style.display === "block"?false:true;
+    content.style.display = content.style.display === "block"?"none":"block";
 }
 
 setInterval(fetchState, 3000);
