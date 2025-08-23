@@ -84,7 +84,7 @@ function upsert_vehicle($pdo, $session_id, $veh) {
     $stmt->execute([
         $session_id, 
         $veh['game_vehicle_id'],
-        check_options("name",$saved_data,$veh,""),
+        check_options("name",$saved_data,$veh,$veh['game_vehicle_id']),
         check_options("type",$saved_data,$veh,"None"),
         check_options("modes",$saved_data,$veh,null),
         check_options("x",$saved_data,$veh,0),
