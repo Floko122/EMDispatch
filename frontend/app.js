@@ -331,6 +331,10 @@ function renderMap() {
     ctx.lineWidth = 1.5 / state.zoom;
     ctx.strokeStyle = '#dfe7ff'; ctx.stroke();
 
+    if(v.status==2){
+      //No text on status2 (at Home)
+      continue;
+    }
     const text = v.name || v.type || v.game_vehicle_id || `#${v.id}`;
     const tw = ctx.measureText(text).width;
     const th = fontSize;
@@ -371,7 +375,7 @@ function renderMap() {
 }
 
 const modal = $('#assignModal');
-$('#closeAssign').addEventListener('click', () => modal.classList.add('hidden'));
+$('#closeAssign').addEventListener('click', () => {modal.classList.add('hidden'); sendNotesAsync(modalEvent);});
 $('#submitAssign').addEventListener('click', submitAssign);
 let modalEvent = null;
 function openAssignModal(eventObj) {
@@ -380,6 +384,7 @@ function openAssignModal(eventObj) {
     `<div><b>${eventObj.name}</b> @ (${eventObj.x.toFixed(1)}, ${eventObj.y.toFixed(1)})</div>`;
     
   loadAssignedVehiclesAsync(eventObj);
+  loadNotesAsync(eventObj);
 
   // Players
   const sel = $('#assignPlayer');
@@ -411,7 +416,7 @@ function openAssignModal(eventObj) {
   }
 
   // Base list = status 1 or 2
-  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2 || v.status == 3);//3 allows reassignment
+  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2);//3 allows reassignment
 
   // Render helper (keeps checked boxes)
   function renderList(first=false) {
@@ -445,7 +450,7 @@ function openAssignModal(eventObj) {
       const id = 'veh_' + v.id;
       const row = document.createElement('div');
       row.innerHTML = `<label ${display_mode}><input type="checkbox" value="${v.id}" id="${id}"/> ${v.name || v.type || v.game_vehicle_id}
-                       <span class="meta">(status ${v.status})</span></label>`;
+                       ${buildDropdown(v.modes, v.id)}<span class="meta">(status ${v.status})</span></label>`;
       const box = row.querySelector('input[type=checkbox]');
       if (prevChecked.has(v.id)) box.checked = true;
       cont.appendChild(row);
@@ -460,15 +465,36 @@ function openAssignModal(eventObj) {
   modal.classList.remove('hidden');
 }
 
+function buildDropdown(mode,id){
+    var modes = mode ? mode.split(","):null;
+    console.log(modes);
+    if(!modes)return "";
+    modes = modes.map(m=>`<option value="${m}">${m}</option>`).join("");
+    return `<select id="${id}_mode">${modes}</select>`;
+}
+
 async function loadAssignedVehiclesAsync(ev) {
   const sel = $("#assignAssignedVehicles");
   const result = await api('events_get_vehicles', {event_id: ev.id});
   var names = result["vehicles"].map(e=>e.name).sort().join(", ");
   if(names){
-    sel.innerHTML = `<h4>Assigned</h4><p>${names}</p>`;
+    sel.innerHTML = `<header>Assigned</header><p>${names}</p>`;
   }else{
     sel.innerHTML = "";
   }
+}
+
+async function loadNotesAsync(ev) {
+  const sel = $("#assignEventComments");
+  const result = await api('events_get_note', {event_id: ev.id});
+  var notes = result.notes.map(e=>e.content).join("<br>");
+  sel.value = notes;
+}
+
+async function sendNotesAsync(ev) {
+  if(!ev)return;
+  const sel = $("#assignEventComments");
+  const result = await api('events_set_note', {event_id: ev.id, content: sel.value});
 }
 
 async function submitAssign() {
@@ -477,8 +503,20 @@ async function submitAssign() {
   if (!boxes.length) { alert('Select at least one unit'); return; }
   const vehicle_ids = boxes.map(b => parseInt(b.value, 10));
   const player_id = $('#assignPlayer').value ? parseInt($('#assignPlayer').value, 10) : null;
+
+  //Search for modes:
+  const dropDowns = Array.from(sel.querySelectorAll('select'));
+  const modes = {}
+  for(let dropDown of dropDowns){
+    var id = parseInt(dropDown.id.split("_")[0],10);
+    if(vehicle_ids.includes(id)){
+      modes[id]=dropDown.value;
+    }
+  }
+
   try {
-    await api('events_assign', {event_id: modalEvent.id, vehicle_ids, player_id});
+    sendNotesAsync(modalEvent);
+    await api('events_assign', {event_id: modalEvent.id, vehicle_ids, player_id, modes});
     modal.classList.add('hidden');
     pushLogRow({created_at: new Date().toISOString(), type:'command', message:'Assigned vehicles to event', meta:{event_id: modalEvent.id, vehicle_ids}});
     fetchState(true);
@@ -487,6 +525,7 @@ async function submitAssign() {
   }
 }
 
+const status_visible = {};
 function renderVehicles() {
   const container = $('#vehiclesList');
   const byStatus = {};
@@ -501,10 +540,17 @@ function renderVehicles() {
   const grouping = state.grouping;
 
   for (const s of statuses) {
+    if(!(s in status_visible)){
+      status_visible[s]= s!=2;//state 2 is hidden by default
+    }
     const title = document.createElement('div');
-    title.className = 'group-title';
+    title.className = 'group-title collapsible';
+    title.onclick = function() { toggleCollapse(title,s); };
     title.textContent = `Status ${s}`;
     container.appendChild(title);
+    const box = document.createElement('div');
+    box.style.display = status_visible[s]?"block":"none";
+    container.appendChild(box);
 
     let items = byStatus[s];
 
@@ -518,18 +564,18 @@ function renderVehicles() {
         if (!matches.length) continue;
         const gt = document.createElement('div');
         gt.className = 'meta'; gt.textContent = `— ${gname}`;
-        container.appendChild(gt);
-        matches.forEach(v => container.appendChild(vehicleItem(v,s)));
+        box.appendChild(gt);
+        matches.forEach(v => box.appendChild(vehicleItem(v,s)));
         const matchIds = new Set(matches.map(m=>m.id));
         items = items.filter(v => !matchIds.has(v.id));
       }
       if (items.length) {
         const gt = document.createElement('div');
         gt.className = 'meta'; gt.textContent = '— Other';
-        container.appendChild(gt);
+        box.appendChild(gt);
       }
     }
-    items.forEach(v => container.appendChild(vehicleItem(v,s)));
+    items.forEach(v => box.appendChild(vehicleItem(v,s)));
   }
 }
 async function sendHome(vehicle_id){
@@ -675,6 +721,14 @@ async function pollLogs() {
       state.logsLastId = rows[rows.length - 1].id;
     }
   } catch {}
+}
+
+function toggleCollapse(node,state){
+    console.log("clicked");
+    node.classList.toggle("active");
+    var content = node.nextElementSibling;
+    status_visible[state] = content.style.display === "block"?false:true;
+    content.style.display = content.style.display === "block"?"none":"block";
 }
 
 setInterval(fetchState, 3000);

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS mods (
   mod_id VARCHAR(255) PRIMARY KEY,
   name VARCHAR(255),
   map_image LONGBLOB,
-  mime_type VARCHAR(128) DEFAULT 'image/jpeg',
+  mime_type VARCHAR(128) DEFAULT 'image/png',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   game_vehicle_id VARCHAR(255) NOT NULL,
   name VARCHAR(255),
   type VARCHAR(255),
+  modes VARCHAR(255),
   x DOUBLE,
   y DOUBLE,
   status INT,
@@ -106,6 +107,19 @@ CREATE TABLE IF NOT EXISTS assignments (
   CONSTRAINT fk_asg_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
   CONSTRAINT fk_asg_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
   CONSTRAINT fk_asg_player FOREIGN KEY (assigned_player_id) REFERENCES players(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS notes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  event_id INT NOT NULL,
+  content TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_session_note (session_id, event_id),
+  UNIQUE KEY uniq_note_game (session_id, event_id),
+  CONSTRAINT nt_asg_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+  CONSTRAINT nt_asg_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS commands (

@@ -101,21 +101,29 @@ if(isset($_GET['session_token']))
   <div id="assignModal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Assign Units to Event</h3>
+        <h3 id="assignEventInfo">Assign Units to Event</h3>
         <button id="closeAssign">×</button>
       </div>
-      <div class="modal-body">
-        <div id="assignEventInfo"></div>
-        <div id="assignAssignedVehicles"></div>
-        <div class="form-row">
-          <label>Assign to Player:</label>
-          <select id="assignPlayer">
-            <option value="">— None —</option>
-          </select>
+      <div class="modal-body row">
+        <div class="column">
+          <!--<div id="assignEventInfo"></div>-->
+          <div class="panel2">
+            <div id="assignAssignedVehicles"></div>
+            <header>Notes</header>
+            <textarea id="assignEventComments"></textarea>
+          </div>
         </div>
-        <div class="form-row">
-          <label>Available Units (status 1 or 2):</label>
-          <div id="assignVehicles" class="checklist"></div>
+        <div class="column">
+          <div class="form-row">
+            <label>Assign to Player:</label>
+            <select id="assignPlayer">
+              <option value="">— None —</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Available Units (status 1 or 2):</label>
+            <div id="assignVehicles" class="checklist"></div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">

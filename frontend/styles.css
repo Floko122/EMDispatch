@@ -20,7 +20,7 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body {
+body, textarea {
   margin: 0;
   font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   background: linear-gradient(180deg, #07102b, #090f20);
@@ -35,7 +35,7 @@ body {
 }
 .brand { font-weight: 700; letter-spacing: .5px; }
 .settings label { margin-right: 10px; font-size: 14px; }
-.settings input { background: #0d1a3a; color: var(--text); border: 1px solid #1d2a55; padding: 6px 8px; border-radius: 8px; }
+.settings input  textarea { background: #0d1a3a; color: var(--text); border: 1px solid #1d2a55; padding: 6px 8px; border-radius: 8px; }
 .settings button { margin-left: 6px; padding: 6px 10px; border-radius: 8px; border: 1px solid #2a3b74; background: #13214a; color: var(--text); cursor: pointer; }
 .panel-toggles label { margin-right: 8px; font-size: 13px; color: var(--muted); }
 
@@ -97,7 +97,7 @@ body {
   padding: 8px; margin-bottom: 6px;
 }
 .item .meta { color: var(--muted); font-size: 12px; }
-.group-title { color: var(--muted); margin: 10px 0 4px; border-bottom: 1px dashed #2a3a74; padding-bottom: 4px; }
+.group-title { color: var(--muted); margin: 10px 0 4px; border-bottom: 1px dashed #2a3a74; padding-bottom: 4px; cursor:help;}
 
 /* Log */
 .log { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
@@ -134,3 +134,26 @@ body {
 /* Hidden panel class (toggles from topbar or per-panel Hide button) */
 .hidden-panel { display: none !important; }
 
+/*Settings for Notes*/
+.column {
+  float: left;
+  width: 50%;
+}
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+.panel2 {
+  display: flex;
+  flex-direction: column;
+  height: 400px;          /* or 100%, 100vh, etc.—just make it definite */
+}
+
+.panel2 textarea {
+  flex: 1 1 auto;         /* grow to fill */
+  min-height: 0;          /* important so it can actually shrink in flex */
+  width: 100%;
+  box-sizing: border-box; /* include padding/border in size */
+  resize: vertical;       /* or 'none' */
+}

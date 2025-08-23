@@ -60,17 +60,40 @@ function upsert_player($pdo, $session_id, $player) {
         ON DUPLICATE KEY UPDATE name = VALUES(name), updated_at = CURRENT_TIMESTAMP');
     $stmt->execute([$session_id, $player['player_id'], $player['name'] ?? null]);
 }
+//Checks in priority the available values for an entry
+function check_options($key, $saved, $sent, $default=null){
+    if(isset($sent[$key])){
+        return $sent[$key];
+    }
+    if($saved && isset($saved[$key])){
+        return $saved[$key];
+    }
+    return $default;
+}
 
+//Update 23.08.2025 Vehicles now can be fed with optional params game_vehicle_id and session_id are of course mandatory
 function upsert_vehicle($pdo, $session_id, $veh) {
-    // $veh: ['game_vehicle_id','name','type','x','y','status']
-    $stmt = $pdo->prepare('INSERT INTO vehicles (session_id, game_vehicle_id, name, type, x, y, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE name = VALUES(name), type = VALUES(type), x = VALUES(x), y = VALUES(y), status = VALUES(status), updated_at = CURRENT_TIMESTAMP');
-    $stmt->execute([$session_id, $veh['game_vehicle_id'], $veh['name'] ?? null, $veh['type'] ?? null, $veh['x'] ?? null, $veh['y'] ?? null, $veh['status'] ?? null]);
+    $stmt = $pdo->prepare('Select * from vehicles where session_id = ? and game_vehicle_id = ?');
+    $stmt->execute([$session_id, $veh['game_vehicle_id']]);
+    $saved_data = $stmt->fetch();
 
-    if($veh['status']==2){
-        $vid = get_vehicle_by_game_id($pdo,$session_id, $veh['game_vehicle_id'])["id"];
-        unassign_vehicle($pdo,$session_id, $vid);
+    // $veh: ['game_vehicle_id','name','type','x','y','status']
+    $stmt = $pdo->prepare('INSERT INTO vehicles (session_id, game_vehicle_id, name, type, modes, x, y, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE name = VALUES(name), type = VALUES(type), modes = VALUES(modes), x = VALUES(x), y = VALUES(y), status = VALUES(status), updated_at = CURRENT_TIMESTAMP');
+    $stmt->execute([
+        $session_id, 
+        $veh['game_vehicle_id'],
+        check_options("name",$saved_data,$veh,$veh['game_vehicle_id']),
+        check_options("type",$saved_data,$veh,"None"),
+        check_options("modes",$saved_data,$veh,null),
+        check_options("x",$saved_data,$veh,0),
+        check_options("y",$saved_data,$veh,0),
+        check_options("status",$saved_data,$veh,2)
+    ]);
+
+    if(isset($veh['status']) && $veh['status']==2 && isset($saved_data["id"])){
+        unassign_vehicle($pdo,$session_id, $saved_data["id"]);
     }
 
     return get_vehicle_by_game_id($pdo, $session_id, $veh['game_vehicle_id']);
@@ -118,4 +141,15 @@ function upsert_event($pdo, $session_id, $e) {
         $stmt->execute([pdo_conn()->lastInsertId()]);
         return $stmt->fetch();
     }
+}
+
+function upsert_notes($pdo, $session_id, $n) {
+    $stmt = $pdo->prepare('INSERT INTO notes (session_id, event_id, content)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE session_id = VALUES(session_id), event_id = VALUES(event_id), content = VALUES(content), updated_at = CURRENT_TIMESTAMP');
+    $stmt->execute([$session_id, $n['event_id'], $n['content'] ?? ""]);
+
+    $stmt = $pdo->prepare('SELECT * FROM notes WHERE session_id = ? AND event_id = ?');
+    $stmt->execute([$session_id, $n['event_id']]);
+    return $stmt->fetch();
 }
