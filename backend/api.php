@@ -384,6 +384,7 @@ try {
 
             $vehicle_ids = $data['vehicle_ids'] ?? [];
             $player_id = $data['player_id'] ?? null;
+            $modes = $data['modes'] ?? null;
 
             if ($player_id) {
                 $stmt = $pdo->prepare('SELECT 1 FROM players WHERE id = ? AND session_id = ?');
@@ -418,6 +419,11 @@ try {
                     'target' => ['x'=>(float)$event['x'],'y'=>(float)$event['y']],
                     'assign_to_player_id' => $player_id ? (int)$player_id : null
                 ];
+                
+                if(isset($modes[$vid]) ){
+                    $payload["mode"]=$modes[$vid];
+                }
+
                 $stmt = $pdo->prepare('INSERT INTO commands (session_id, type, payload) VALUES (?, ?, ?)');
                 $stmt->execute([$sid, 'assign', json_encode($payload, JSON_UNESCAPED_UNICODE)]);
 

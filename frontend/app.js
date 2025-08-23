@@ -446,7 +446,7 @@ function openAssignModal(eventObj) {
       const id = 'veh_' + v.id;
       const row = document.createElement('div');
       row.innerHTML = `<label ${display_mode}><input type="checkbox" value="${v.id}" id="${id}"/> ${v.name || v.type || v.game_vehicle_id}
-                       <span class="meta">(status ${v.status})</span></label>`;
+                       ${buildDropdown(v.modes, v.id)}<span class="meta">(status ${v.status})</span></label>`;
       const box = row.querySelector('input[type=checkbox]');
       if (prevChecked.has(v.id)) box.checked = true;
       cont.appendChild(row);
@@ -459,6 +459,14 @@ function openAssignModal(eventObj) {
   sbox.focus();
   // Show modal
   modal.classList.remove('hidden');
+}
+
+function buildDropdown(mode,id){
+    var modes = mode ? mode.split(","):null;
+    console.log(modes);
+    if(!modes)return "";
+    modes = modes.map(m=>`<option value="${m}">${m}</option>`).join("");
+    return `<select id="${id}_mode">${modes}</select>`;
 }
 
 async function loadAssignedVehiclesAsync(ev) {
@@ -491,9 +499,20 @@ async function submitAssign() {
   if (!boxes.length) { alert('Select at least one unit'); return; }
   const vehicle_ids = boxes.map(b => parseInt(b.value, 10));
   const player_id = $('#assignPlayer').value ? parseInt($('#assignPlayer').value, 10) : null;
+
+  //Search for modes:
+  const dropDowns = Array.from(sel.querySelectorAll('select'));
+  const modes = {}
+  for(let dropDown of dropDowns){
+    var id = parseInt(dropDown.id.split("_")[0],10);
+    if(vehicle_ids.includes(id)){
+      modes[id]=dropDown.value;
+    }
+  }
+
   try {
     sendNotesAsync(modalEvent);
-    await api('events_assign', {event_id: modalEvent.id, vehicle_ids, player_id});
+    await api('events_assign', {event_id: modalEvent.id, vehicle_ids, player_id, modes});
     modal.classList.add('hidden');
     pushLogRow({created_at: new Date().toISOString(), type:'command', message:'Assigned vehicles to event', meta:{event_id: modalEvent.id, vehicle_ids}});
     fetchState(true);
