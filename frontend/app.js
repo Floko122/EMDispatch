@@ -412,7 +412,7 @@ function openAssignModal(eventObj) {
   }
 
   // Base list = status 1 or 2
-  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2 || v.status == 3);//3 allows reassignment
+  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2);//3 allows reassignment
 
   // Render helper (keeps checked boxes)
   function renderList(first=false) {
