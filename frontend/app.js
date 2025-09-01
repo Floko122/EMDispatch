@@ -698,6 +698,10 @@ async function fetchState(showErr) {
         $('#mapImage').src = src;
       }
     }
+    console.log(data);
+    if(data.time){
+      $('#time-panel').innerHTML = (data.time.time_hours+"").padStart(2, "0") +":"+ (data.time.time_minutes+"").padStart(2, "0");
+    }
 
     renderVehicles();
     if (state.activeVehTab === 'hospitals') renderHospitals();

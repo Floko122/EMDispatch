@@ -18,6 +18,7 @@
       <button id="saveSettings">Save</button>
       <button id="reloadBtn" title="Reload state">↻</button>
     </div>
+    <div id="time-panel"></div>
     <div class="panel-toggles">
       Panels:
       <label><input type="checkbox" data-toggle="panel-map" checked> Map</label>
