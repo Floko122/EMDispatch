@@ -139,6 +139,15 @@ try {
             foreach (($data['hospitals'] ?? []) as $h) { upsert_hospital($pdo, $sid, $h); }
             foreach (($data['events'] ?? []) as $e) { $e['created_by'] = 'game'; upsert_event($pdo, $sid, $e); }
 
+            if(isset($data['time'] )){
+                $stmt = $pdo->prepare('INSERT INTO clock (session_id, time_hours, time_minutes)
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        time_hours = VALUES(time_hours),
+                        time_minutes = VALUES(time_minutes)');
+                $stmt->execute([$sid, $data['time']['h'], $data['time']['m']]);
+            }
+
             $pdo->commit();
             respond_json(200, ['ok' => true, 'session_id' => $sid]);
             break;
@@ -213,6 +222,10 @@ try {
             $events->execute([$sid]);
             $events = $events->fetchAll();
 
+            $time = $pdo->prepare("SELECT * FROM clock WHERE session_id = ?");
+            $time->execute([$sid]);
+            $time = $time->fetch();
+
             $resp = [
                 'session' => [
                     'token' => $session['token'],
@@ -228,6 +241,7 @@ try {
                 'vehicles' => $vehicles,
                 'hospitals' => $hospitals,
                 'events' => $events,
+                'time' => $time,
             ];
             respond_json(200, $resp);
             break;

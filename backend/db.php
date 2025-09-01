@@ -58,7 +58,7 @@ function upsert_player($pdo, $session_id, $player) {
     // $player: ['player_id','name']
     $stmt = $pdo->prepare('INSERT INTO players (session_id, player_uid, name) VALUES (?, ?, ?)
         ON DUPLICATE KEY UPDATE name = VALUES(name), updated_at = CURRENT_TIMESTAMP');
-    $stmt->execute([$session_id, $player['player_id'], $player['name'] ?? null]);
+    $stmt->execute([$session_id, $player, $player ?? "John Doe"]);
 }
 //Checks in priority the available values for an entry
 function check_options($key, $saved, $sent, $default=null){

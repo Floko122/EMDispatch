@@ -145,3 +145,9 @@ CREATE TABLE IF NOT EXISTS activity_logs (
   INDEX idx_session (session_id, id),
   CONSTRAINT fk_logs_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS clock (
+  session_id INT NOT NULL PRIMARY KEY,
+  time_hours TINYINT(1) DEFAULT 0,
+  time_minutes TINYINT(1) DEFAULT 0
+) ENGINE=InnoDB;
