@@ -420,7 +420,8 @@ function renderList(first=false) {
     const isDisplayed= matches(v);
     const display_mode = `style = "display:${isDisplayed?"block":"none"}"`
     const id = 'veh_' + v.id;
-    const prefix = v.name.includes("_")?v.name.split("_")[0]:"";
+	const separator = v.name.includes("_")?"_":"-";
+    const prefix = v.name.includes(separator)?v.name.split(separator)[0]:"";
     if(prefix!=lastPrefix && isDisplayed ){
       const breaker = document.createElement('div');
       breaker.classList.add("row-break");
