@@ -106,7 +106,7 @@ body, textarea {
 .log .row .type { font-weight: 700; margin-right: 6px; }
 
 /* Modal */
-.modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); z-index: 50; }
+.modal { position: fixed; inset: 0; display: flex; max-height: 90vh; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); z-index: 50; }
 .hidden { display: none; }
 .modal-content { width: 70%; background: var(--panel); border: 1px solid #2a3a74; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #1c2b5a; }
@@ -114,11 +114,12 @@ body, textarea {
 .modal-header button { background: transparent; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
 .modal-body { padding: 12px; }
 .modal-footer { padding: 12px; display: flex; justify-content: flex-end; border-top: 1px solid #1c2b5a; }
-.modal-body .selectedVehicles { padding: 2px 2px; border: 1px solid #2a3b74; background: #15234c; color: var(--text); border-radius: 10px; cursor: pointer; display:inline-block;}
+.modal-body .selectedVehicles { padding: 2px 2px; margin: 2px; border: 1px solid #2a3b74; background: #15234c; color: var(--text); border-radius: 10px; cursor: pointer; display:inline-block;}
 .row-break { grid-column: 1 / -1; height: 0; padding: 0; margin: 0; }
+hr{ margin-top: 3pt !important; margin-bottom: 3pt!important;}
 .modal-footer button { padding: 8px 12px; border: 1px solid #2a3b74; background: #15234c; color: var(--text); border-radius: 10px; cursor: pointer; }
 .form-row { margin: 10px 0; }
-.checklist { max-height: 280px; overflow: auto; border: 1px solid #26366d; border-radius: 8px; padding: 6px; display: grid;
+.checklist { max-height: 50vh; overflow: auto; border: 1px solid #26366d; border-radius: 8px; padding: 6px; display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150pt, max-content));}
 
 /* Detachable (pop-out) */
@@ -141,6 +142,8 @@ body, textarea {
 .column {
   float: left;
   width: 50%;
+  margin-left: 5pt;
+  margin-right: 5pt;
 }
 .row:after {
   content: "";
@@ -150,7 +153,7 @@ body, textarea {
 .panel2 {
   display: flex;
   flex-direction: column;
-  height: 400px;          /* or 100%, 100vh, etc.—just make it definite */
+  height: 60vh;          /* or 100%, 100vh, etc.—just make it definite */
 }
 
 .panel2 textarea {
