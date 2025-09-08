@@ -106,7 +106,7 @@ if(isset($_GET['session_token']))
         <button id="closeAssign">×</button>
       </div>
       <div class="modal-body row">
-        <div class="column">
+        <div class="column" style="width: 20%;">
           <!--<div id="assignEventInfo"></div>-->
           <div class="panel2">
             <div id="assignAssignedVehicles"></div>
@@ -114,12 +114,16 @@ if(isset($_GET['session_token']))
             <textarea id="assignEventComments"></textarea>
           </div>
         </div>
-        <div class="column">
+        <div class="column" style="width: 80%;">
           <div class="form-row">
             <label>Assign to Player:</label>
             <select id="assignPlayer">
               <option value="">— None —</option>
             </select>
+          </div>
+          <div class="form-row">
+            <label>Selected:</label>
+            <div id="selectedVehicles"></div>
           </div>
           <div class="form-row">
             <label>Available Units (status 1 or 2):</label>

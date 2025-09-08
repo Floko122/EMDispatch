@@ -377,7 +377,74 @@ function renderMap() {
 const modal = $('#assignModal');
 $('#closeAssign').addEventListener('click', () => {modal.classList.add('hidden'); sendNotesAsync(modalEvent);});
 $('#submitAssign').addEventListener('click', submitAssign);
+// Vehicle checklist + search box just above it
+const cont = $('#assignVehicles');
+const selection = $('#selectedVehicles');
+const vehiclesRow = cont.closest('.form-row') || cont.parentElement;
+// Create (or reuse) the search input and insert it directly above the list
+let sbox = vehiclesRow.querySelector('#assignSearch');
 let modalEvent = null;
+
+// Render helper (keeps checked boxes)
+function renderList(first=false) {
+  const prevChecked = first==true ? new Set() : new Set(
+    Array.from(cont.querySelectorAll('input[type=checkbox]:checked')).map(b => +b.value)
+  );
+  
+  // Base list = status 1 or 2
+  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2);//3 allows reassignment
+  selection.innerHTML="";
+  const q = sbox.value.trim();
+  let rex = null, isRegex = false;
+
+  // If user typed /pattern/flags build a RegExp
+  if (q.startsWith('/') && q.lastIndexOf('/') > 0) {
+    const last = q.lastIndexOf('/');
+    const pat = q.slice(1, last);
+    const flags = q.slice(last + 1);
+    try { rex = new RegExp(pat, flags); isRegex = true; } catch { /* ignore regex errors, fallback to plain */ }
+  }
+
+  const term = q.toLowerCase();
+  const matches = (v) => {
+    const label = `${v.name||''} ${v.type||''} ${v.game_vehicle_id||''} ${v.id}`.trim();
+    if (!q) return true;
+    if (isRegex) return rex.test(label);
+    const tokens = term.split(/\s+/).filter(Boolean);
+    const hay = label.toLowerCase();
+    return tokens.every(t => hay.includes(t));
+  };
+  cont.innerHTML = '';
+  let lastPrefix = '';
+  base.forEach(v => {
+    const isDisplayed= matches(v);
+    const display_mode = `style = "display:${isDisplayed?"block":"none"}"`
+    const id = 'veh_' + v.id;
+    const prefix = v.name.includes("_")?v.name.split("_")[0]:"";
+    if(prefix!=lastPrefix && isDisplayed ){
+      const breaker = document.createElement('div');
+      breaker.classList.add("row-break");
+      cont.appendChild(breaker);
+      if(lastPrefix!=""){
+        const rule = document.createElement('hr');
+        rule.classList.add("row-break");
+        cont.appendChild(rule);
+      }
+      lastPrefix=prefix;
+    }
+
+    const row = document.createElement('div');
+    row.innerHTML = `<label class="selectedVehicles" ${display_mode}><input type="checkbox" value="${v.id}" id="${id}" onClick="renderList()"/> ${v.name || v.type || v.game_vehicle_id}
+                      ${buildDropdown(v.modes, v.id)}<span class="meta">${v.status==2?"&#x0032;&#xFE0F;&#x20E3;":"&#x0031;&#xFE0F;&#x20E3;"}</span></label>`;
+    const box = row.querySelector('input[type=checkbox]');
+    if (prevChecked.has(v.id)){
+      box.checked = true;
+      selection.innerHTML += `<label class="selectedVehicles">${v.name}&nbsp;<button onClick="$('#${id}').click()">X</button></label>`;
+    } 
+    cont.appendChild(row);
+  });
+}
+
 function openAssignModal(eventObj) {
   modalEvent = eventObj;
   $('#assignEventInfo').innerHTML =
@@ -394,13 +461,6 @@ function openAssignModal(eventObj) {
     opt.value = p.id; opt.textContent = p.name || p.player_id || ('Player #' + p.id);
     sel.appendChild(opt);
   }
-
-  // Vehicle checklist + search box just above it
-  const cont = $('#assignVehicles');
-  const vehiclesRow = cont.closest('.form-row') || cont.parentElement;
-
-  // Create (or reuse) the search input and insert it directly above the list
-  let sbox = vehiclesRow.querySelector('#assignSearch');
   if (!sbox) {
     sbox = document.createElement('input');
     sbox.id = 'assignSearch';
@@ -414,49 +474,6 @@ function openAssignModal(eventObj) {
   } else {
     sbox.value = '';
   }
-
-  // Base list = status 1 or 2
-  const base = state.vehicles.filter(v => v.status == 1 || v.status == 2);//3 allows reassignment
-
-  // Render helper (keeps checked boxes)
-  function renderList(first=false) {
-    const prevChecked = first==true ? new Set() : new Set(
-      Array.from(cont.querySelectorAll('input[type=checkbox]:checked')).map(b => +b.value)
-    );
-    const q = sbox.value.trim();
-    let rex = null, isRegex = false;
-
-    // If user typed /pattern/flags build a RegExp
-    if (q.startsWith('/') && q.lastIndexOf('/') > 0) {
-      const last = q.lastIndexOf('/');
-      const pat = q.slice(1, last);
-      const flags = q.slice(last + 1);
-      try { rex = new RegExp(pat, flags); isRegex = true; } catch { /* ignore regex errors, fallback to plain */ }
-    }
-
-    const term = q.toLowerCase();
-    const matches = (v) => {
-      const label = `${v.name||''} ${v.type||''} ${v.game_vehicle_id||''} ${v.id}`.trim();
-      if (!q) return true;
-      if (isRegex) return rex.test(label);
-      const tokens = term.split(/\s+/).filter(Boolean);
-      const hay = label.toLowerCase();
-      return tokens.every(t => hay.includes(t));
-    };
-
-    cont.innerHTML = '';
-    base.forEach(v => {
-      const display_mode = `style = "display:${matches(v)?"block":"none"}"`
-      const id = 'veh_' + v.id;
-      const row = document.createElement('div');
-      row.innerHTML = `<label ${display_mode}><input type="checkbox" value="${v.id}" id="${id}"/> ${v.name || v.type || v.game_vehicle_id}
-                       ${buildDropdown(v.modes, v.id)}<span class="meta">(status ${v.status})</span></label>`;
-      const box = row.querySelector('input[type=checkbox]');
-      if (prevChecked.has(v.id)) box.checked = true;
-      cont.appendChild(row);
-    });
-  }
-
   // Initial render + live filtering
   renderList(true);
   sbox.oninput = renderList;
@@ -465,9 +482,9 @@ function openAssignModal(eventObj) {
   modal.classList.remove('hidden');
 }
 
+
 function buildDropdown(mode,id){
     var modes = mode ? mode.split(","):null;
-    console.log(modes);
     if(!modes)return "";
     modes = modes.map(m=>`<option value="${m}">${m}</option>`).join("");
     return `<select id="${id}_mode">${modes}</select>`;
@@ -698,7 +715,6 @@ async function fetchState(showErr) {
         $('#mapImage').src = src;
       }
     }
-    console.log(data);
     if(data.time){
       $('#time-panel').innerHTML = (data.time.time_hours+"").padStart(2, "0") +":"+ (data.time.time_minutes+"").padStart(2, "0");
     }
@@ -728,7 +744,6 @@ async function pollLogs() {
 }
 
 function toggleCollapse(node,state){
-    console.log("clicked");
     node.classList.toggle("active");
     var content = node.nextElementSibling;
     status_visible[state] = content.style.display === "block"?false:true;
