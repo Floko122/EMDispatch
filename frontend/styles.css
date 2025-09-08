@@ -108,15 +108,18 @@ body, textarea {
 /* Modal */
 .modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); z-index: 50; }
 .hidden { display: none; }
-.modal-content { width: 520px; background: var(--panel); border: 1px solid #2a3a74; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.modal-content { width: 70%; background: var(--panel); border: 1px solid #2a3a74; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #1c2b5a; }
 .modal-header h3 { margin: 0; }
 .modal-header button { background: transparent; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
 .modal-body { padding: 12px; }
 .modal-footer { padding: 12px; display: flex; justify-content: flex-end; border-top: 1px solid #1c2b5a; }
+.modal-body .selectedVehicles { padding: 2px 2px; border: 1px solid #2a3b74; background: #15234c; color: var(--text); border-radius: 10px; cursor: pointer; display:inline-block;}
+.row-break { grid-column: 1 / -1; height: 0; padding: 0; margin: 0; }
 .modal-footer button { padding: 8px 12px; border: 1px solid #2a3b74; background: #15234c; color: var(--text); border-radius: 10px; cursor: pointer; }
 .form-row { margin: 10px 0; }
-.checklist { max-height: 280px; overflow: auto; border: 1px solid #26366d; border-radius: 8px; padding: 6px; }
+.checklist { max-height: 280px; overflow: auto; border: 1px solid #26366d; border-radius: 8px; padding: 6px; display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150pt, max-content));}
 
 /* Detachable (pop-out) */
 .popout {
