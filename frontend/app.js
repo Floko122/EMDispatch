@@ -391,6 +391,15 @@ function renderList(first=false) {
     Array.from(cont.querySelectorAll('input[type=checkbox]:checked')).map(b => +b.value)
   );
   
+  //Search for modes:
+  const sel = $('#assignVehicles');
+  const dropDowns = Array.from(sel.querySelectorAll('select'));
+  const modes = {}
+  for(let dropDown of dropDowns){
+    var id = parseInt(dropDown.id.split("_")[0],10);
+    modes[id]=dropDown.value;
+  }
+  
   // Base list = status 1 or 2
   const base = state.vehicles.filter(v => v.status == 1 || v.status == 2);//3 allows reassignment
   selection.innerHTML="";
@@ -436,7 +445,7 @@ function renderList(first=false) {
 
     const row = document.createElement('div');
     row.innerHTML = `<label class="selectedVehicles" ${display_mode}><input type="checkbox" value="${v.id}" id="${id}" onClick="renderList()"/> ${v.name || v.type || v.game_vehicle_id}
-                      ${buildDropdown(v.modes, v.id)}<span class="meta">${v.status==2?"&#x0032;&#xFE0F;&#x20E3;":"&#x0031;&#xFE0F;&#x20E3;"}</span></label>`;
+                      ${buildDropdown(v.modes, v.id, modes)}<span class="meta">${v.status==2?"&#x0032;&#xFE0F;&#x20E3;":"&#x0031;&#xFE0F;&#x20E3;"}</span></label>`;
     const box = row.querySelector('input[type=checkbox]');
     if (prevChecked.has(v.id)){
       box.checked = true;
@@ -484,19 +493,20 @@ function openAssignModal(eventObj) {
 }
 
 
-function buildDropdown(mode,id){
+function buildDropdown(mode,id, prev_modes){
     var modes = mode ? mode.split(","):null;
     if(!modes)return "";
-    modes = modes.map(m=>`<option value="${m}">${m}</option>`).join("");
+    const selectedMode = id in prev_modes ? prev_modes[id]:"";
+    modes = modes.map(m=>`<option value="${m}" ${m==selectedMode?"selected=true":""}>${m}</option>`).join("");
     return `<select id="${id}_mode">${modes}</select>`;
 }
 
 async function loadAssignedVehiclesAsync(ev) {
   const sel = $("#assignAssignedVehicles");
   const result = await api('events_get_vehicles', {event_id: ev.id});
-  var names = result["vehicles"].map(e=>e.name).sort().join(", ");
+  var names = result["vehicles"].map(e=>`<div class="selectedVehicles">${e.name}</div>`).sort().join("");
   if(names){
-    sel.innerHTML = `<header>Assigned</header><p>${names}</p>`;
+    sel.innerHTML = `${names}`;
   }else{
     sel.innerHTML = "";
   }

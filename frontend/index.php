@@ -109,17 +109,20 @@ if(isset($_GET['session_token']))
         <div class="column" style="width: 20%;">
           <!--<div id="assignEventInfo"></div>-->
           <div class="panel2">
-            <div id="assignAssignedVehicles"></div>
             <header>Notes</header>
             <textarea id="assignEventComments"></textarea>
           </div>
         </div>
-        <div class="column" style="width: 80%;">
+        <div class="column" style="width: 75%;">
           <div class="form-row">
             <label>Assign to Player:</label>
             <select id="assignPlayer">
               <option value="">— None —</option>
             </select>
+          </div>
+          <div class="form-row">
+            <label>Assigned:</label>
+            <div id="assignAssignedVehicles"></div>
           </div>
           <div class="form-row">
             <label>Selected:</label>
