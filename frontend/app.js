@@ -243,7 +243,7 @@ function clientToWorld(cx, cy) {
   const ny = (h - d.y) / d.h;
   const worldX = state.mapBounds.min_x + nx * (state.mapBounds.max_x - state.mapBounds.min_x);
   const worldY = state.mapBounds.min_y + ny * (state.mapBounds.max_y - state.mapBounds.min_y);
-  return {x: worldX, y: worldY};
+  return {x: worldX, y: -worldY};
 }
 
 function worldToCanvas(pt) {
