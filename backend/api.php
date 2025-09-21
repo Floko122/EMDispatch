@@ -355,6 +355,16 @@ try {
             ];
             $event = upsert_event($pdo, $sid, $e);
             log_activity($pdo, $sid, 'event', $event['id'], 'Event created', ['event_id'=>$event['id'], 'source'=>'frontend']);
+            //Create Command for Game
+            $payload = [
+                'event_id' => (int)$event['id'],
+                'name' => $data['name'],
+                'target' => ['x'=>(float)$data['x'],'y'=>(float)$data['y']]
+            ];
+
+            $stmt = $pdo->prepare('INSERT INTO commands (session_id, type, payload) VALUES (?, ?, ?)');
+            $stmt->execute([$sid, 'event_create', json_encode($payload, JSON_UNESCAPED_UNICODE)]);
+
             respond_json(200, ['ok'=>true, 'event'=>$event]);
             break;
 
@@ -379,6 +389,15 @@ try {
             $stmt->execute([$event_id, $sid]);
 
             log_activity($pdo, $sid, 'event', $event_id, 'Event finished (frontend)', ['event_id'=>$event_id]);
+            
+            //Create Command for Game
+            $payload = [
+                'event_id' => (int)$event_id,
+                'event_game_id' => (int)$ev["game_event_id"]
+            ];
+
+            $stmt = $pdo->prepare('INSERT INTO commands (session_id, type, payload) VALUES (?, ?, ?)');
+            $stmt->execute([$sid, 'event_delete', json_encode($payload, JSON_UNESCAPED_UNICODE)]);
 
             respond_json(200, ['ok'=>true]);
             break;

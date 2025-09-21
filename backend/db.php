@@ -125,20 +125,55 @@ function upsert_hospital($pdo, $session_id, $h) {
 
 function upsert_event($pdo, $session_id, $e) {
     // $e: ['game_event_id' (nullable for frontend), 'name','x','y','status','created_by']
-    if (isset($e['game_event_id'])) {
+
+    //Preload Data
+    if (isset($e['id'])) {
+        $stmt = $pdo->prepare('Select * from events where session_id = ? and id = ?');
+        $stmt->execute([$session_id, $e['id']]);
+        $saved_data = $stmt->fetch();
+    }else if(isset($e['game_event_id'])){
+        $stmt = $pdo->prepare('Select * from events where session_id = ? and game_event_id = ?');
+        $stmt->execute([$session_id, $e['game_event_id']]);
+        $saved_data = $stmt->fetch();
+    }else{
+        $saved_data = [];
+    }
+    //Prepare Statement:
+    if(isset($e['id'])){
+        //Separate statement needed as id situation will not trigger on duplicate entry
+        $stmt = $pdo->prepare('Update events 
+        SET name = ?, game_event_id= ?, x = ?, y = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        where id = ?');   
+        $stmt->execute([
+            check_options("name",$saved_data,$e,NULL),
+            check_options("game_event_id",$saved_data,$e,NULL),
+            check_options("x",$saved_data,$e,NULL),
+            check_options("y",$saved_data,$e,NULL),
+            check_options("status",$saved_data,$e,"active"),
+            $e['id']
+        ]);
+    }else{
         $stmt = $pdo->prepare('INSERT INTO events (session_id, game_event_id, name, x, y, status, created_by)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE name = VALUES(name), x = VALUES(x), y = VALUES(y), status = VALUES(status), updated_at = CURRENT_TIMESTAMP');
-        $stmt->execute([$session_id, $e['game_event_id'], $e['name'] ?? null, $e['x'] ?? null, $e['y'] ?? null, $e['status'] ?? 'active', $e['created_by'] ?? 'game']);
-        // return id
+            ON DUPLICATE KEY UPDATE name = VALUES(name), game_event_id= VALUES(game_event_id), x = VALUES(x), y = VALUES(y), status = VALUES(status), updated_at = CURRENT_TIMESTAMP');
+        $stmt->execute([
+            $session_id, 
+            check_options("game_event_id",$saved_data,$e,NULL),
+            check_options("name",$saved_data,$e,NULL),
+            check_options("x",$saved_data,$e,NULL),
+            check_options("y",$saved_data,$e,NULL),
+            check_options("status",$saved_data,$e,"active"),
+            check_options("created_by",$saved_data,$e,"game")
+        ]);
+    }
+
+    if (isset($e['game_event_id'])) {
         $stmt = $pdo->prepare('SELECT * FROM events WHERE session_id = ? AND game_event_id = ?');
         $stmt->execute([$session_id, $e['game_event_id']]);
         return $stmt->fetch();
-    } else {
-        $stmt = $pdo->prepare('INSERT INTO events (session_id, name, x, y, status, created_by) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$session_id, $e['name'] ?? 'Event', $e['x'] ?? 0, $e['y'] ?? 0, $e['status'] ?? 'active', $e['created_by'] ?? 'frontend']);
+    }else {
         $stmt = $pdo->prepare('SELECT * FROM events WHERE id = ?');
-        $stmt->execute([pdo_conn()->lastInsertId()]);
+        $stmt->execute([isset($e['id'])?$e['id']:pdo_conn()->lastInsertId()]);
         return $stmt->fetch();
     }
 }

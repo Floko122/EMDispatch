@@ -211,7 +211,7 @@ mapWrapper.addEventListener('contextmenu', (e) => {
   const pos = clientToWorld(e.clientX, e.clientY);
   const name = prompt('Name of new event?', 'Custom Event');
   if (!name) return;
-  api('events_create', {name, x: pos.x, y: pos.y}).then(() => {
+  api('events_create', {name: name, x: pos.x, y: -pos.y}).then(() => {
     fetchState(true);
   }).catch(err => alert('Failed to create event: ' + err.message));
 });
@@ -699,6 +699,7 @@ async function api(action, payload={}, method='POST') {
     method, headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body)
   });
+  //console.log(await res.text());
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
