@@ -48,13 +48,32 @@ body, textarea {
   height: calc(100vh - 60px);
 }
 
+.grid-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 6px 1fr 6px 1fr;
+  gap: 10px;
+  padding: 10px;
+  height: calc(100vh - 60px);
+}
+
+.grid-col2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 2fr 6px 1fr;
+  gap: 10px;
+  padding: 10px;
+  height: calc(100vh - 60px);
+}
 .gutter-col, .gutter-row {
   background: rgba(255,255,255,0.06);
   border-radius: 4px;
 }
 .gutter-col { cursor: col-resize; }
 .gutter-row { cursor: row-resize; }
-.grid.dragging .gutter-col, .grid.dragging .gutter-row { background: rgba(255,255,255,0.15); }
+.grid.dragging .gutter-col, .grid.dragging .gutter-row,
+.grid-col.dragging .gutter-row,
+.grid-col2.dragging .gutter-row { background: rgba(255,255,255,0.15); }
 
 .panel {
   background: var(--panel);

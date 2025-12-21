@@ -87,27 +87,89 @@ document.addEventListener('mousemove', (e) => {
 });
 document.addEventListener('mouseup', () => { dragPanel = null; });
 
-const grid = $('#grid');
-let gridDrag = null;
-$('#gutter-col').addEventListener('mousedown', () => { gridDrag = {type:'col'}; grid.classList.add('dragging'); });
-$('#gutter-row').addEventListener('mousedown', () => { gridDrag = {type:'row'}; grid.classList.add('dragging'); });
+const rootGrid = $('#grid');
+const rowContainers = {
+  left: $('#grid-left'),
+  right: $('#grid-right')
+};
+const rowState = {
+  left: [2, 1],
+  right: [1.4, 1, 1]
+};
+Object.keys(rowState).forEach((key) => applyRowState(key));
+
+let dragContext = null;
+$('#gutter-col').addEventListener('mousedown', (evt) => {
+  evt.preventDefault();
+  if (!rootGrid) return;
+  dragContext = { type: 'col', container: rootGrid };
+  rootGrid.classList.add('dragging');
+});
+
+$$('.gutter-row[data-grid-key]').forEach(gutter => {
+  gutter.addEventListener('mousedown', (evt) => {
+    const key = gutter.dataset.gridKey;
+    const index = parseInt(gutter.dataset.trackIndex, 10);
+    if (!key || Number.isNaN(index)) return;
+    evt.preventDefault();
+    startRowDrag(key, index, gutter);
+  });
+});
+
+function startRowDrag(key, index, gutter) {
+  const container = rowContainers[key];
+  if (!container) return;
+  const prev = gutter.previousElementSibling;
+  const next = gutter.nextElementSibling;
+  if (!prev || !next) return;
+  dragContext = { type: 'row', container, key, index, prev, next };
+  container.classList.add('dragging');
+}
+
+function applyRowState(key) {
+  const container = rowContainers[key];
+  if (!container) return;
+  const values = rowState[key];
+  const tracks = [];
+  values.forEach((val, idx) => {
+    if (idx) tracks.push('6px');
+    tracks.push(`${val}fr`);
+  });
+  container.style.gridTemplateRows = tracks.join(' ');
+}
+
 window.addEventListener('mousemove', (e) => {
-  if (!gridDrag) return;
-  const rect = grid.getBoundingClientRect();
-  if (gridDrag.type === 'col') {
+  if (!dragContext) return;
+  if (dragContext.type === 'col' && dragContext.container) {
+    const rect = dragContext.container.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const ratio = Math.min(0.85, Math.max(0.15, x / rect.width));
-    grid.style.setProperty('--col1', `${ratio}fr`);
-    grid.style.setProperty('--col2', `${1 - ratio}fr`);
-  } else {
-    const y = e.clientY - rect.top;
-    const ratio = Math.min(0.85, Math.max(0.15, y / rect.height));
-    grid.style.setProperty('--row1', `${ratio}fr`);
-    grid.style.setProperty('--row2', `${1 - ratio}fr`);
+    dragContext.container.style.setProperty('--col1', `${ratio}fr`);
+    dragContext.container.style.setProperty('--col2', `${1 - ratio}fr`);
+    queueResize();
+  } else if (dragContext.type === 'row') {
+    const prevRect = dragContext.prev?.getBoundingClientRect();
+    const nextRect = dragContext.next?.getBoundingClientRect();
+    if (!prevRect || !nextRect) return;
+    const pairStart = prevRect.top;
+    const pairEnd = nextRect.bottom;
+    const ratioRaw = (e.clientY - pairStart) / (pairEnd - pairStart);
+    const ratio = Math.min(0.85, Math.max(0.15, ratioRaw));
+    const values = rowState[dragContext.key];
+    if (!values || values[dragContext.index + 1] === undefined) return;
+    const pairSum = values[dragContext.index] + values[dragContext.index + 1];
+    values[dragContext.index] = pairSum * ratio;
+    values[dragContext.index + 1] = pairSum * (1 - ratio);
+    applyRowState(dragContext.key);
+    queueResize();
   }
-  queueResize();
 });
-window.addEventListener('mouseup', () => { gridDrag = null; grid.classList.remove('dragging'); });
+
+window.addEventListener('mouseup', () => {
+  if (!dragContext) return;
+  dragContext.container?.classList.remove('dragging');
+  dragContext = null;
+});
 
 $('#panel-vehicles').querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -658,11 +720,11 @@ function renderHospitals() {
     const el = document.createElement('div');
     el.className = 'item';
     el.innerHTML = `
-      <div><b>${h.name || 'Hospital'}</b></div>
-      <div class="meta">
+      <div><b style="min-width: 1000pt;">${h.name || 'Hospital'} </b>ICU: ${h.icu_available>0?"🟢":"🔴"}${h.icu_available}/${h.icu_total} • Ward: ${h.ward_available>0?"🟢":"🔴"}${h.ward_available}/${h.ward_total}</div>
+      <!--<div class="meta">
         ICU: ${h.icu_available}/${h.icu_total} • Ward: ${h.ward_available}/${h.ward_total}
         • Pos: ${Math.round(h.x)},${Math.round(h.y)}
-      </div>
+      </div>-->
     `;
     container.appendChild(el);
   }
@@ -791,7 +853,8 @@ async function fetchState(showErr) {
     }
 
     renderVehicles();
-    if (state.activeVehTab === 'hospitals') renderHospitals();
+    //if (state.activeVehTab === 'hospitals') 
+    renderHospitals();
     renderEvents();
     renderMap();
   } catch (err) {

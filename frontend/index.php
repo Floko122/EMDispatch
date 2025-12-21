@@ -34,68 +34,92 @@ if(isset($_GET['session_token']))
   <!-- Resizable 2x2 grid with draggable gutters -->
   <main class="grid" id="grid">
     <!-- Row 1 -->
-    <section class="panel" id="panel-map" style="grid-column: 1; grid-row: 1;">
-      <div class="panel-header">
-        <h2>Map</h2>
-        <div class="panel-actions">
-          <!--<button class="hide-panel" data-panel="panel-map">Hide</button>
-          <button class="detach" data-panel="panel-map">Pop-out</button>-->
-        </div>
-      </div>
-      <div class="map-wrapper" id="mapWrapper">
-        <img id="mapImage" src="" alt="Map"/>
-        <canvas id="mapCanvas"></canvas>
-      </div>
-      <div class="legend">
-        <span class="chip veh">Vehicle</span>
-        <span class="chip evt">Event</span>
-      </div>
-    </section>
+     <div class="grid-col2" id="grid-left">
+        <section class="panel" id="panel-map" style="grid-column: 1; grid-row: 1;">
+          <div class="panel-header">
+            <h2>Map</h2>
+            <div class="panel-actions">
+              <!--<button class="hide-panel" data-panel="panel-map">Hide</button>
+              <button class="detach" data-panel="panel-map">Pop-out</button>-->
+            </div>
+          </div>
+          <div class="map-wrapper" id="mapWrapper">
+            <img id="mapImage" src="" alt="Map"/>
+            <canvas id="mapCanvas"></canvas>
+          </div>
+          <div class="legend">
+            <span class="chip veh">Vehicle</span>
+            <span class="chip evt">Event</span>
+          </div>
+        </section>
+      <div class="gutter-row" id="gutter-row" data-grid-key="left" data-track-index="0" style="grid-column: 1 / span 1; grid-row: 2" title="Drag to resize rows"></div>
 
-    <div class="gutter-col" id="gutter-col" style="grid-column: 2; grid-row: 1 / span 3" title="Drag to resize columns"></div>
-
-    <section class="panel" id="panel-vehicles" style="grid-column: 3; grid-row: 1;">
-      <div class="panel-header">
-        <h2>Vehicles / Hospitals</h2>
-        <div class="tabs">
-          <button class="tab active" data-tab="vehicles">Vehicles</button>
-          <button class="tab" data-tab="hospitals">Hospitals</button>
+      <section class="panel" id="panel-log" style="grid-column: 1; grid-row: 3;">
+        <div class="panel-header">
+          <h2>Activity Log</h2>
+          <div class="panel-actions">
+            <!--<button class="hide-panel" data-panel="panel-log">Hide</button>
+            <button class="detach" data-panel="panel-log">Pop-out</button>-->
+            <button id="clearLog">Clear</button>
+          </div>
         </div>
-        <div class="panel-actions">
-          <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
-          <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
-        </div>
-      </div>
-      <div class="panel-body">
-        <div id="vehiclesList"></div>
-        <div id="hospitalsList" class="hidden"></div>
-      </div>
-    </section>
+        <div class="panel-body log" id="activityLog"></div>
+      </section>
+    </div>
 
-    <div class="gutter-row" id="gutter-row" style="grid-column: 1 / span 3; grid-row: 2" title="Drag to resize rows"></div>
+    <div class="gutter-col" id="gutter-col" style="grid-column: 2; grid-row: 1 / span 5" title="Drag to resize columns"></div>
 
-    <section class="panel" id="panel-events" style="grid-column: 1; grid-row: 3;">
-      <div class="panel-header">
-        <h2>Events</h2>
-        <div class="panel-actions">
-          <!--<button class="hide-panel" data-panel="panel-events">Hide</button>
-          <button class="detach" data-panel="panel-events">Pop-out</button>-->
+    <div class="grid-col" id="grid-right" style="grid-column: 3; grid-row: 1;">
+      <section class="panel" id="panel-vehicles" style="grid-column: 1; grid-row: 1;">
+        <div class="panel-header">
+          <h2>Vehicles</h2>
+          <!--<div class="tabs">
+            <button class="tab active" data-tab="vehicles">Vehicles</button>
+            <button class="tab" data-tab="hospitals">Hospitals</button>
+          </div>-->
+          <div class="panel-actions">
+            <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
+            <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
+          </div>
         </div>
-      </div>
-      <div class="panel-body" id="eventsList"></div>
-    </section>
+        <div class="panel-body ">
+          <div id="vehiclesList"></div>
+        </div>
+      </section>
+      
+      <div class="gutter-row" id="gutter-row1" data-grid-key="right" data-track-index="0" style="grid-column: 1; grid-row: 2" title="Drag to resize rows"></div>
 
-    <section class="panel" id="panel-log" style="grid-column: 3; grid-row: 3;">
-      <div class="panel-header">
-        <h2>Activity Log</h2>
-        <div class="panel-actions">
-          <!--<button class="hide-panel" data-panel="panel-log">Hide</button>
-          <button class="detach" data-panel="panel-log">Pop-out</button>-->
-          <button id="clearLog">Clear</button>
+      <section class="panel" id="panel-hospitals" style="grid-column: 1; grid-row: 3;">
+        <div class="panel-header">
+          <h2>Hospitals</h2>
+          <!--<div class="tabs">
+            <button class="tab active" data-tab="vehicles">Vehicles</button>
+            <button class="tab" data-tab="hospitals">Hospitals</button>
+          </div>-->
+          <div class="panel-actions">
+            <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
+            <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
+          </div>
         </div>
-      </div>
-      <div class="panel-body log" id="activityLog"></div>
-    </section>
+        <div class="panel-body">
+          <div id="hospitalsList"></div>
+        </div>
+      </section>
+
+      <div class="gutter-row" id="gutter-row2" data-grid-key="right" data-track-index="1" style="grid-column: 1; grid-row: 4" title="Drag to resize rows"></div>
+      
+      <section class="panel" id="panel-events" style="grid-column: 1; grid-row: 5;">
+        <div class="panel-header">
+          <h2>Events</h2>
+          <div class="panel-actions">
+            <!--<button class="hide-panel" data-panel="panel-events">Hide</button>
+            <button class="detach" data-panel="panel-events">Pop-out</button>-->
+          </div>
+        </div>
+        <div class="panel-body" id="eventsList"></div>
+      </section>
+    </div>
+    
   </main>
 
   <!-- Assignment Modal -->
