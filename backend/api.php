@@ -17,19 +17,17 @@ $action = $_GET['action'] ?? $_POST['action'] ?? null;
 function n($v) { return is_null($v) ? null : 0 + $v; }
 
 // Utility: UUID v4
-function uuidv4() {
-    $data = random_bytes(16);
-    $data[6] = chr((ord($data[6]) & 0x0f) | 0x40); // version 4
-    $data[8] = chr((ord($data[8]) & 0x3f) | 0x80); // variant
-    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+function session_token() {
+    $data = random_bytes(length: 2);
+    return bin2hex($data);
 }
 
 // Utility: create a unique session token and insert a session row
 function create_session(PDO $pdo, ?string $mod_id, ?array $bounds) {
     $attempts = 0;
-    while ($attempts < 5) {
+    while ($attempts < 10) {
         $attempts++;
-        $token = uuidv4();
+        $token = session_token();
         try {
             if ($bounds) {
                 $stmt = $pdo->prepare('INSERT INTO sessions (token, mod_id, min_x, min_y, max_x, max_y) VALUES (?, ?, ?, ?, ?, ?)');
@@ -51,6 +49,7 @@ function create_session(PDO $pdo, ?string $mod_id, ?array $bounds) {
             return $stmt->fetch();
         } catch (PDOException $e) {
             // 1062 = duplicate key; try again with a new UUID
+            trigger_error($e,E_USER_ERROR);
             if (isset($e->errorInfo[1]) && (int)$e->errorInfo[1] === 1062) {
                 continue;
             }
