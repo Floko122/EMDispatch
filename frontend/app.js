@@ -429,7 +429,7 @@ function renderList(first=false) {
     const isDisplayed= matches(v);
     const display_mode = `style = "display:${isDisplayed?"block":"none"}"`
     const id = 'veh_' + v.id;
-	const separator = v.name.includes("_")?"_":"-";
+	  const separator = v.name.includes("_")?"_":"-";
     const prefix = v.name.includes(separator)?v.name.split(separator)[0]:"";
     if(prefix!=lastPrefix && isDisplayed ){
       const breaker = document.createElement('div');
@@ -577,7 +577,8 @@ function renderVehicles() {
     title.textContent = `Status ${s}`;
     container.appendChild(title);
     const box = document.createElement('div');
-    box.style.display = status_visible[s]?"block":"none";
+    box.style.display = status_visible[s]?"grid":"none";
+    box.classList.add("checklist");
     container.appendChild(box);
 
     let items = byStatus[s];
@@ -593,7 +594,13 @@ function renderVehicles() {
         const gt = document.createElement('div');
         gt.className = 'meta'; gt.textContent = `— ${gname}`;
         box.appendChild(gt);
-        matches.forEach(v => box.appendChild(vehicleItem(v,s)));
+        var lastPrefix="";
+        matches.forEach(
+          v => {
+            lastPrefix = checkNameForSeparator(v,box,lastPrefix);
+            box.appendChild(vehicleItem(v,s));
+          }
+        );
         const matchIds = new Set(matches.map(m=>m.id));
         items = items.filter(v => !matchIds.has(v.id));
       }
@@ -603,9 +610,29 @@ function renderVehicles() {
         box.appendChild(gt);
       }
     }
-    items.forEach(v => box.appendChild(vehicleItem(v,s)));
+    var lastPrefix="";
+    items.forEach(v =>
+      {
+        lastPrefix = checkNameForSeparator(v,box,lastPrefix);
+        box.appendChild(vehicleItem(v,s));
+      }
+    );
   }
 }
+function checkNameForSeparator(v,box,lastPrefix){
+  const separator = v.name.includes("_")?"_":"-";
+  const prefix = v.name.includes(separator)?v.name.split(separator)[0]:"";
+  if(lastPrefix!="" && lastPrefix!=prefix){
+    const rule = document.createElement('hr');
+    rule.classList.add("row-break");
+    box.appendChild(rule);
+    lastPrefix=prefix;
+  }else if(lastPrefix==""){
+    lastPrefix=prefix;
+  }
+  return lastPrefix;
+}
+
 async function sendHome(vehicle_id){
   var vehicle_ids = [vehicle_id];
   await api('events_unassign', {vehicle_ids});
@@ -616,9 +643,9 @@ function vehicleItem(v,s) {
   const label = v.name || v.type || v.game_vehicle_id || ('Vehicle #' + v.id);
   const player = (state.players.find(p => p.id === v.assigned_player_id)?.name) || '—';
   el.innerHTML = `
-    <div><b>${label}</b>${s==3?`<button onclick='sendHome(${v.id}).then(() => this.remove())'>Send Home</button>`:""}</div>
-    <div class="meta">id:${v.id} • status:${v.status} • pos:${Math.round(v.x)},${Math.round(v.y)} • player:${player}</div>
+    <div class="selectedVehicles"><b>${label}</b>${s==3?`<button onclick='sendHome(${v.id}).then(() => this.remove())'>Send Home</button>`:""}</div>
   `;
+  //<div class="meta">id:${v.id} • status:${v.status} • pos:${Math.round(v.x)},${Math.round(v.y)} • player:${player}</div>
   return el;
 }
 
@@ -758,8 +785,8 @@ async function pollLogs() {
 function toggleCollapse(node,state){
     node.classList.toggle("active");
     var content = node.nextElementSibling;
-    status_visible[state] = content.style.display === "block"?false:true;
-    content.style.display = content.style.display === "block"?"none":"block";
+    status_visible[state] = content.style.display === "grid"?false:true;
+    content.style.display = content.style.display === "grid"?"none":"grid";
 }
 
 setInterval(fetchState, 3000);

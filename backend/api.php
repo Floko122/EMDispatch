@@ -49,10 +49,10 @@ function create_session(PDO $pdo, ?string $mod_id, ?array $bounds) {
             return $stmt->fetch();
         } catch (PDOException $e) {
             // 1062 = duplicate key; try again with a new UUID
-            trigger_error($e,E_USER_ERROR);
             if (isset($e->errorInfo[1]) && (int)$e->errorInfo[1] === 1062) {
                 continue;
             }
+            trigger_error($e,E_USER_ERROR);
             throw $e;
         }
     }

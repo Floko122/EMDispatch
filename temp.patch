@@ -1,0 +1,27 @@
+*** Begin Patch
+*** Update File: frontend/app.js
+@@
+   }
+ }
+ 
++function applyVehicleRowBreak(target, vehicleName, lastPrefix, options = {}) {
++  const name = String(vehicleName || '');
++  const separator = name.includes('_') ? '_' : '-';
++  const prefix = name.includes(separator) ? name.split(separator)[0] : '';
++  if (prefix === lastPrefix) return lastPrefix;
++  if (options.addSpacer) {
++    const spacer = document.createElement('div');
++    spacer.classList.add('row-break');
++    target.appendChild(spacer);
++  }
++  if (lastPrefix !== '') {
++    const rule = document.createElement('hr');
++    rule.classList.add('row-break');
++    target.appendChild(rule);
++  }
++  return prefix;
++}
++
+ const status_visible = {};
+ function renderVehicles() {
+*** End Patch
