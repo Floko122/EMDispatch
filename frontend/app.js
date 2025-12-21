@@ -668,11 +668,39 @@ function renderHospitals() {
   }
 }
 
+
+let audioUnlocked = false;
+async function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+
+  // “Prime” audio: play a silent frame then pause (works in many browsers)
+  const a = new Audio();
+  a.volume = 0;
+  try {
+    await a.play();
+    a.pause();
+  } catch (e) {
+    // If this still fails, we’ll just keep audioUnlocked false
+    audioUnlocked = false;
+  }
+}
+
+// Call this once from a user gesture
+window.addEventListener("pointerdown", unlockAudio, { once: true });
+window.addEventListener("keydown", unlockAudio, { once: true });
+
+//Helper for intersect of sets
+const difference = (set1, set2) => new Set([...set1].filter(x => !set2.has(x)));
+let phoneSound = new Audio('./assets/phone.wav');
+var lastEvents=new Set()
 function renderEvents() {
   const container = $('#eventsList');
   container.innerHTML = '';
+  var events=new Set();
   const sorted = [...state.events].sort((a,b)=>a.id-b.id);
   for (const ev of sorted) {
+    events.add(ev.id);
     const el = document.createElement('div');
     el.className = 'item';
     el.innerHTML = `
@@ -702,8 +730,12 @@ function renderEvents() {
     }
     container.appendChild(el);
   }
+  if(Array.from(difference(events, lastEvents)).length){
+    phoneSound.load();
+    phoneSound.play();
+  }
+  lastEvents=events;
 }
-
 function pushLogRow(row) {
   const cont = $('#activityLog');
   const el = document.createElement('div');
