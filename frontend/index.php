@@ -38,8 +38,8 @@ if(isset($_GET['session_token']))
       <div class="panel-header">
         <h2>Map</h2>
         <div class="panel-actions">
-          <button class="hide-panel" data-panel="panel-map">Hide</button>
-          <button class="detach" data-panel="panel-map">Pop-out</button>
+          <!--<button class="hide-panel" data-panel="panel-map">Hide</button>
+          <button class="detach" data-panel="panel-map">Pop-out</button>-->
         </div>
       </div>
       <div class="map-wrapper" id="mapWrapper">
@@ -62,8 +62,8 @@ if(isset($_GET['session_token']))
           <button class="tab" data-tab="hospitals">Hospitals</button>
         </div>
         <div class="panel-actions">
-          <button class="hide-panel" data-panel="panel-vehicles">Hide</button>
-          <button class="detach" data-panel="panel-vehicles">Pop-out</button>
+          <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
+          <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
         </div>
       </div>
       <div class="panel-body">
@@ -78,8 +78,8 @@ if(isset($_GET['session_token']))
       <div class="panel-header">
         <h2>Events</h2>
         <div class="panel-actions">
-          <button class="hide-panel" data-panel="panel-events">Hide</button>
-          <button class="detach" data-panel="panel-events">Pop-out</button>
+          <!--<button class="hide-panel" data-panel="panel-events">Hide</button>
+          <button class="detach" data-panel="panel-events">Pop-out</button>-->
         </div>
       </div>
       <div class="panel-body" id="eventsList"></div>
@@ -89,8 +89,8 @@ if(isset($_GET['session_token']))
       <div class="panel-header">
         <h2>Activity Log</h2>
         <div class="panel-actions">
-          <button class="hide-panel" data-panel="panel-log">Hide</button>
-          <button class="detach" data-panel="panel-log">Pop-out</button>
+          <!--<button class="hide-panel" data-panel="panel-log">Hide</button>
+          <button class="detach" data-panel="panel-log">Pop-out</button>-->
           <button id="clearLog">Clear</button>
         </div>
       </div>
