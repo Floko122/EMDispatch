@@ -53,21 +53,39 @@ if(isset($_GET['session_token']))
           </div>
         </section>
       <div class="gutter-row" id="gutter-row" data-grid-key="left" data-track-index="0" style="grid-column: 1 / span 1; grid-row: 2" title="Drag to resize rows"></div>
-
-      <section class="panel" id="panel-log" style="grid-column: 1; grid-row: 3;">
-        <div class="panel-header">
-          <h2>Activity Log</h2>
-          <div class="panel-actions">
-            <!--<button class="hide-panel" data-panel="panel-log">Hide</button>
-            <button class="detach" data-panel="panel-log">Pop-out</button>-->
-            <button id="clearLog">Clear</button>
+      <div class="panel-row panel-row-log" style="grid-column: 1; grid-row: 3;">
+        <section class="panel panel-log" id="panel-log">
+          <div class="panel-header">
+            <h2>Activity Log</h2>
+            <div class="panel-actions">
+              <!--<button class="hide-panel" data-panel="panel-log">Hide</button>
+              <button class="detach" data-panel="panel-log">Pop-out</button>
+              <button id="clearLog">Clear</button>-->
+            </div>
           </div>
-        </div>
-        <div class="panel-body log" id="activityLog"></div>
-      </section>
+          <div class="panel-body log" id="activityLog"></div>
+        </section>
+        <section class="panel panel-hospitals" id="panel-hospitals">
+          <div class="panel-header">
+            <h2>Hospitals</h2>
+            <!--<div class="tabs">
+              <button class="tab active" data-tab="vehicles">Vehicles</button>
+              <button class="tab" data-tab="hospitals">Hospitals</button>
+            </div>-->
+            <div class="panel-actions">
+              <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
+              <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="hospitalsList"></div>
+          </div>
+        </section>
+      </div>
+
     </div>
 
-    <div class="gutter-col" id="gutter-col" style="grid-column: 2; grid-row: 1 / span 5" title="Drag to resize columns"></div>
+    <div class="gutter-col" id="gutter-col" style="grid-column: 2; grid-row: 1 / span 2" title="Drag to resize columns"></div>
 
     <div class="grid-col" id="grid-right" style="grid-column: 3; grid-row: 1;">
       <section class="panel" id="panel-vehicles" style="grid-column: 1; grid-row: 1;">
@@ -89,26 +107,8 @@ if(isset($_GET['session_token']))
       
       <div class="gutter-row" id="gutter-row1" data-grid-key="right" data-track-index="0" style="grid-column: 1; grid-row: 2" title="Drag to resize rows"></div>
 
-      <section class="panel" id="panel-hospitals" style="grid-column: 1; grid-row: 3;">
-        <div class="panel-header">
-          <h2>Hospitals</h2>
-          <!--<div class="tabs">
-            <button class="tab active" data-tab="vehicles">Vehicles</button>
-            <button class="tab" data-tab="hospitals">Hospitals</button>
-          </div>-->
-          <div class="panel-actions">
-            <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
-            <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
-          </div>
-        </div>
-        <div class="panel-body">
-          <div id="hospitalsList"></div>
-        </div>
-      </section>
 
-      <div class="gutter-row" id="gutter-row2" data-grid-key="right" data-track-index="1" style="grid-column: 1; grid-row: 4" title="Drag to resize rows"></div>
-      
-      <section class="panel" id="panel-events" style="grid-column: 1; grid-row: 5;">
+      <section class="panel" id="panel-events" style="grid-column: 1; grid-row: 3;">
         <div class="panel-header">
           <h2>Events</h2>
           <div class="panel-actions">

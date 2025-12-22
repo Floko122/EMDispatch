@@ -94,7 +94,7 @@ const rowContainers = {
 };
 const rowState = {
   left: [2, 1],
-  right: [1.4, 1, 1]
+  right: [1.4, 1]
 };
 Object.keys(rowState).forEach((key) => applyRowState(key));
 
@@ -170,7 +170,7 @@ window.addEventListener('mouseup', () => {
   dragContext.container?.classList.remove('dragging');
   dragContext = null;
 });
-
+/*//@Deprecated
 $('#panel-vehicles').querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
     $('#panel-vehicles').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -186,6 +186,7 @@ $('#panel-vehicles').querySelectorAll('.tab').forEach(btn => {
     }
   });
 });
+*/
 
 const mapImg = $('#mapImage');
 const mapCanvas = $('#mapCanvas');
@@ -487,8 +488,17 @@ function renderList(first=false) {
   };
   cont.innerHTML = '';
   let lastPrefix = '';
-  base.forEach(v => {
-    const isDisplayed= matches(v);
+  base.forEach(v => {lastPrefix=renderVehicle(v,cont,lastPrefix,matches,selection,modes,true,prevChecked)});
+}
+function renderState(status, cls_nr=-1){
+  if(cls_nr==-1){
+    cls_nr=status;
+  }
+  const cls = Number.isFinite(cls_nr) ? `status-${cls_nr}` : 'status-unknown';
+  return `<span class="status-badge ${cls}">${status}</span>`;
+}
+function renderVehicle(v, parent, lastPrefix,filter=v=>true,selection=null, modes=null, includeCheckbox=false,prevChecked=null){
+    const isDisplayed= filter(v);
     const display_mode = `style = "display:${isDisplayed?"block":"none"}"`
     const id = 'veh_' + v.id;
 	  const separator = v.name.includes("_")?"_":"-";
@@ -496,25 +506,31 @@ function renderList(first=false) {
     if(prefix!=lastPrefix && isDisplayed ){
       const breaker = document.createElement('div');
       breaker.classList.add("row-break");
-      cont.appendChild(breaker);
+      parent.appendChild(breaker);
       if(lastPrefix!=""){
         const rule = document.createElement('hr');
         rule.classList.add("row-break");
-        cont.appendChild(rule);
+        parent.appendChild(rule);
       }
       lastPrefix=prefix;
     }
 
     const row = document.createElement('div');
-    row.innerHTML = `<label class="selectedVehicles" ${display_mode}><input type="checkbox" value="${v.id}" id="${id}" onClick="renderList()"/> ${v.name || v.type || v.game_vehicle_id}
-                      ${buildDropdown(v.modes, v.id, modes)}<span class="meta">${v.status==2?"&#x0032;&#xFE0F;&#x20E3;":"&#x0031;&#xFE0F;&#x20E3;"}</span></label>`;
+    row.innerHTML = `<label class="selectedVehicles" ${display_mode}>
+        <span class="meta">
+          ${renderState(v.status)}
+        </span>
+        ${includeCheckbox?`<input type="checkbox" value="${v.id}" id="${id}" onClick="renderList()"/>`:""} ${v.name || v.type || v.game_vehicle_id}
+        ${modes?buildDropdown(v.modes, v.id, modes):""}
+        ${v.status==3?`<button onclick='sendHome(${v.id}).then(() => this.remove())'>🔙</button>`:""}
+        </label>`;
     const box = row.querySelector('input[type=checkbox]');
-    if (prevChecked.has(v.id)){
+    if (selection && prevChecked && prevChecked.has(v.id)){
       box.checked = true;
       selection.innerHTML += `<label class="selectedVehicles">${v.name}&nbsp;<button onClick="$('#${id}').click()">X</button></label>`;
     } 
-    cont.appendChild(row);
-  });
+    parent.appendChild(row);
+    return lastPrefix;
 }
 
 function openAssignModal(eventObj) {
@@ -565,12 +581,11 @@ function buildDropdown(mode,id, prev_modes){
 
 async function loadAssignedVehiclesAsync(ev) {
   const sel = $("#assignAssignedVehicles");
+  sel.innerHTML="";
   const result = await api('events_get_vehicles', {event_id: ev.id});
   var names = result["vehicles"].map(e=>`<div class="selectedVehicles">${e.name}</div>`).sort().join("");
   if(names){
     sel.innerHTML = `${names}`;
-  }else{
-    sel.innerHTML = "";
   }
 }
 
@@ -608,7 +623,7 @@ async function submitAssign() {
     sendNotesAsync(modalEvent);
     await api('events_assign', {event_id: modalEvent.id, vehicle_ids, player_id, modes});
     modal.classList.add('hidden');
-    pushLogRow({created_at: new Date().toISOString(), type:'command', message:'Assigned vehicles to event', meta:{event_id: modalEvent.id, vehicle_ids}});
+    //pushLogRow({created_at: new Date().toISOString(), type:'command', message:'Assigned vehicles to event', meta:{event_id: modalEvent.id, vehicle_ids}});
     fetchState(true);
   } catch (err) {
     alert('Failed to assign: ' + err.message);
@@ -618,6 +633,18 @@ async function submitAssign() {
 const status_visible = {};
 function renderVehicles() {
   const container = $('#vehiclesList');
+  container.innerHTML = '';
+  container.style.display = "grid";
+  container.classList.add("checklist");
+  var lastPrefix="";
+  state.vehicles.forEach(v =>
+      {
+        lastPrefix=renderVehicle(v,container,lastPrefix);
+        //lastPrefix = checkNameForSeparator(v,box,lastPrefix);
+        //box.appendChild(vehicleItem(v,s));
+      }
+    );
+    /*//Code to use a status based search may be removed
   const byStatus = {};
   for (const v of state.vehicles) {
     if (!byStatus[v.status]) byStatus[v.status] = [];
@@ -675,12 +702,14 @@ function renderVehicles() {
     var lastPrefix="";
     items.forEach(v =>
       {
-        lastPrefix = checkNameForSeparator(v,box,lastPrefix);
-        box.appendChild(vehicleItem(v,s));
+        lastPrefix=renderVehicle(v,box,lastPrefix);
+        //lastPrefix = checkNameForSeparator(v,box,lastPrefix);
+        //box.appendChild(vehicleItem(v,s));
       }
     );
-  }
+  }*/
 }
+/*//@Deprecated
 function checkNameForSeparator(v,box,lastPrefix){
   const separator = v.name.includes("_")?"_":"-";
   const prefix = v.name.includes(separator)?v.name.split(separator)[0]:"";
@@ -695,20 +724,21 @@ function checkNameForSeparator(v,box,lastPrefix){
   return lastPrefix;
 }
 
-async function sendHome(vehicle_id){
-  var vehicle_ids = [vehicle_id];
-  await api('events_unassign', {vehicle_ids});
-}
 function vehicleItem(v,s) {
   const el = document.createElement('div');
   el.className = 'item';
   const label = v.name || v.type || v.game_vehicle_id || ('Vehicle #' + v.id);
   const player = (state.players.find(p => p.id === v.assigned_player_id)?.name) || '—';
   el.innerHTML = `
-    <div class="selectedVehicles"><b>${label}</b>${s==3?`<button onclick='sendHome(${v.id}).then(() => this.remove())'>Send Home</button>`:""}</div>
+    <div class="selectedVehicles"><b>${label}</b>${s==3?`<button onclick='sendHome(${v.id}).then(() => this.remove())'>🔙</button>`:""}</div>
   `;
   //<div class="meta">id:${v.id} • status:${v.status} • pos:${Math.round(v.x)},${Math.round(v.y)} • player:${player}</div>
   return el;
+}*/
+
+async function sendHome(vehicle_id){
+  var vehicle_ids = [vehicle_id];
+  await api('events_unassign', {vehicle_ids});
 }
 
 function renderHospitals() {
@@ -716,11 +746,24 @@ function renderHospitals() {
   const list = [...state.hospitals];
   list.sort((a,b) => (b.icu_available - a.icu_available) || (b.ward_available - a.ward_available) || (a.name||'').localeCompare(b.name||''));
   container.innerHTML = '';
+  
+  const el = document.createElement('tr');
+  el.innerHTML = `
+  <th>Name</th>
+  <th>ICU</th>
+  <th>Ward</th>
+  `;
+  container.appendChild(el);
+
   for (const h of list) {
-    const el = document.createElement('div');
+    var icu_ratio=h.icu_available==0?4:(h.icu_available/h.icu_total<0.2?3:2);
+    var ward_ratio= h.ward_available==0?4:(h.ward_available/h.ward_total<0.2?3:2);
+    const el = document.createElement('tr');
     el.className = 'item';
     el.innerHTML = `
-      <div><b style="min-width: 1000pt;">${h.name || 'Hospital'} </b>ICU: ${h.icu_available>0?"🟢":"🔴"}${h.icu_available}/${h.icu_total} • Ward: ${h.ward_available>0?"🟢":"🔴"}${h.ward_available}/${h.ward_total}</div>
+      <td><b style="min-width: 1000pt;">${h.name || 'Hospital'} 
+      <td title="${h.icu_available}/${h.icu_total}">${renderState(h.icu_available,icu_ratio)}</td>
+        <td title="${h.ward_available}/${h.ward_total}">${renderState(h.ward_available,ward_ratio)}</td>
       <!--<div class="meta">
         ICU: ${h.icu_available}/${h.icu_total} • Ward: ${h.ward_available}/${h.ward_total}
         • Pos: ${Math.round(h.x)},${Math.round(h.y)}
@@ -772,8 +815,8 @@ function renderEvents() {
           <span class="meta">id:${ev.id} • ${ev.status} • (${Math.round(ev.x)}, ${Math.round(ev.y)})</span>
         </div>
         <div style="white-space:nowrap;">
-          <button data-id="${ev.id}" data-act="assign">Send Units</button>
-          ${ev.created_by === 'frontend' ? `<button data-id="${ev.id}" data-act="finish" title="Mark finished">Finish</button>` : ``}
+          ${ev.created_by === 'frontend' ? `<button data-id="${ev.id}" data-act="finish" title="Mark finished">❎</button>` : ``}
+          <button data-id="${ev.id}" data-act="assign" title="Send Units">➡️</button>
         </div>
       </div>
     `;
@@ -798,21 +841,31 @@ function renderEvents() {
   }
   lastEvents=events;
 }
+function eventForID(id){
+  console.log(state.events,id);
+  console.log(state.events.find(ev=>ev.id==id));
+  return  state.events.find(ev=>ev.id==id);
+}
+
 function pushLogRow(row) {
   const cont = $('#activityLog');
   const el = document.createElement('div');
   el.className = 'row';
   el.innerHTML = `<span class="time">${new Date(row.created_at).toLocaleTimeString()}</span>
-                  <span class="type">[${row.type}]</span> ${row.message}
-                  ${row.meta ? `<span class="meta"> ${JSON.stringify(row.meta)}</span>` : ''}`;
+                  ${row.entity_id ? `<button onclick='openAssignModal(eventForID(${row.entity_id}))'>📂</button>`:""}
+                  <!--<span class="type">[${row.type}]</span> 
+                  ${row.meta ? `<span class="meta"> ${JSON.stringify(row.meta)}</span>` : ''}-->
+                  ${row.message}
+                  `;
   cont.appendChild(el);
   cont.scrollTop = cont.scrollHeight;
 }
+/*@Deprecated
 $('#clearLog').addEventListener('click', () => {
   $('#activityLog').innerHTML = '';
   state.logsLastId = 0;
 });
-
+*/
 async function api(action, payload={}, method='POST') {
   const url = `${state.apiBase}?action=${encodeURIComponent(action)}`;
   const body = Object.assign({}, payload, {session_token: state.sessionToken});
