@@ -480,7 +480,7 @@ try {
 
             $event_id = $data['event_id'] ?? null;
             if (!$event_id) respond_json(400, ['error'=>'Missing event_id']);
-            $stmt = $pdo->prepare('SELECT vehicles.id, name FROM assignments join vehicles on vehicles.session_id = assignments.session_id and vehicles.id=assignments.vehicle_id WHERE assignments.event_id = ? AND assignments.session_id = ?');
+            $stmt = $pdo->prepare('SELECT vehicles.id, name, vehicles.status as status FROM assignments join vehicles on vehicles.session_id = assignments.session_id and vehicles.id=assignments.vehicle_id WHERE assignments.event_id = ? AND assignments.session_id = ?');
             $stmt->execute([$event_id, $sid]);
             $vehicles = $stmt->fetchAll();
             respond_json(200, ['ok'=>true,'vehicles'=>$vehicles]);

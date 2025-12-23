@@ -608,12 +608,12 @@ function buildDropdown(mode,id, prev_modes){
 
 async function loadAssignedVehiclesAsync(ev) {
   const sel = $("#assignAssignedVehicles");
-  sel.innerHTML="";
+  sel.style.display = "flex";
+  sel.innerHTML="loading ...";
   const result = await api('events_get_vehicles', {event_id: ev.id});
-  var names = result["vehicles"].map(e=>`<div class="selectedVehicles">${e.name}</div>`).sort().join("");
-  if(names){
-    sel.innerHTML = `${names}`;
-  }
+  sel.innerHTML="";
+  //var names = 
+  result["vehicles"].forEach(e=>renderVehicle(e,sel,""));//.sort().join("");//`<div class="selectedVehicles">${e.name}</div>`
 }
 
 async function loadNotesAsync(ev) {

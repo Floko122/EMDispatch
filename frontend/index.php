@@ -146,7 +146,7 @@ if(isset($_GET['session_token']))
           </div>
           <div class="form-row">
             <label>Assigned:</label>
-            <div id="assignAssignedVehicles"></div>
+            <div id="assignAssignedVehicles" class="checklist"></div>
           </div>
           <div class="form-row">
             <label>Selected:</label>
