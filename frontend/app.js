@@ -18,6 +18,31 @@ const state = {
   modId: null,
   activeVehTab: 'vehicles',
 };
+
+// Keep map drawing colors in sync with CSS custom properties.
+const cssVarCache = new Map();
+function readCssVar(name) {
+  if (!cssVarCache.has(name)) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    cssVarCache.set(name, value);
+  }
+  return cssVarCache.get(name);
+}
+const statusFillCache = new Map();
+function getStatusFillColor(status) {
+  const key = `status-${status}`;
+  if (!statusFillCache.has(key)) {
+    const cssVarName = `--status-${status}-start`;
+    const fallback = readCssVar('--good') || '#1dd1a1';
+    const color = readCssVar(cssVarName) || fallback;
+    statusFillCache.set(key, color);
+  }
+  return statusFillCache.get(key);
+}
+const getAccentColor = () => readCssVar('--accent') || '#6ea8fe';
+const getAccentOutlineColor = () => readCssVar('--accent-outline') || '#bcd2ff';
+const getVehicleOutlineColor = () => readCssVar('--vehicle-outline') || '#dfe7ff';
+const getTextFillColor = () => readCssVar('--text') || '#e6ecff';
 if(!$('#apiBase').value){
 	$('#apiBase').value = state.apiBase;
 }
@@ -346,6 +371,10 @@ function renderMap() {
   ctx.font = `${fontSize}px sans-serif`;
   ctx.textBaseline = 'bottom';
   ctx.textAlign = 'center';
+  const accentColor = getAccentColor();
+  const accentOutline = getAccentOutlineColor();
+  const vehicleOutline = getVehicleOutlineColor();
+  const textFill = getTextFillColor();
 
   const placed = [];
   const pad = 3;
@@ -358,10 +387,10 @@ function renderMap() {
     ctx.beginPath();
     const diameter = Math.min(10/state.zoom,10);
     ctx.arc(p.x, p.y, diameter, 0, Math.PI*2);
-    ctx.fillStyle = '#6ea8fe';
+    ctx.fillStyle = accentColor;
     ctx.fill();
     ctx.lineWidth = 2 / state.zoom;
-    ctx.strokeStyle = '#bcd2ff';
+    ctx.strokeStyle = accentOutline;
     ctx.stroke();
 
     const text = ev.name || 'Event';
@@ -371,7 +400,7 @@ function renderMap() {
     const ly = p.y + diameter/2 -1;
     ctx.lineWidth = 3 / state.zoom;
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillStyle = '#e6ecff';
+    ctx.fillStyle = textFill;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.strokeText(text, lx, ly);
@@ -387,12 +416,10 @@ function renderMap() {
 
     ctx.beginPath();
     ctx.moveTo(p.x, p.y-nodeOffset); ctx.lineTo(p.x+nodeOffset, p.y); ctx.lineTo(p.x, p.y+nodeOffset); ctx.lineTo(p.x-nodeOffset, p.y); ctx.closePath();
-    let fill = '#1dd1a1';
-    if (v.status >= 3 && v.status <= 5) fill = '#ff9f43';
-    if (v.status > 5) fill = '#ee5253';
+    const fill = getStatusFillColor(v.status);
     ctx.fillStyle = fill; ctx.fill();
     ctx.lineWidth = 1.5 / state.zoom;
-    ctx.strokeStyle = '#dfe7ff'; ctx.stroke();
+    ctx.strokeStyle = vehicleOutline; ctx.stroke();
 
     if(v.status==2){
       //No text on status2 (at Home)
@@ -424,7 +451,7 @@ function renderMap() {
         ctx.textBaseline = 'bottom';
         ctx.lineWidth = 3 / state.zoom;
         ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillStyle = '#e6ecff';
+        ctx.fillStyle = textFill;
         ctx.strokeText(text, lx, ly);
         ctx.fillText(text, lx, ly);
         ctx.restore();
