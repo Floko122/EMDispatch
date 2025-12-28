@@ -49,6 +49,7 @@ if(!$('#sessionToken').value){
 	$('#sessionToken').value = state.sessionToken;
 }
 function saveSettings(){
+  console.log("saving");
   state.apiBase = $('#apiBase').value.trim() || '/backend/api.php';
   state.sessionToken = $('#sessionToken').value.trim();
   localStorage.setItem('apiBase', state.apiBase);

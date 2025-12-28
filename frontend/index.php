@@ -20,10 +20,6 @@
       <button id="reloadBtn" title="Reload state">↻</button>
     </div>
   </header>
-<?php  
-if(isset($_GET['session_token']))
-	echo '<script>saveSettings();</script>';
-?>
   <main class="grid" id="grid">
     <!-- Row 1 -->
      <div class="grid-col2" id="grid-left">
@@ -128,5 +124,9 @@ if(isset($_GET['session_token']))
   </div>
 
   <script src="./app.js"></script>
+  <?php  
+  if(isset($_GET['session_token']))
+    echo '<script>saveSettings();</script>';
+  ?>
 </body>
 </html>
