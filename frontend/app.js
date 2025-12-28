@@ -519,8 +519,8 @@ function renderVehicle(v, parent, lastPrefix,filter=v=>true,selection=null, mode
     const isDisplayed= filter(v);
     const display_mode = `style = "display:${isDisplayed?"block":"none"}"`
     const id = 'veh_' + v.id;
-	  const separator = v.name.includes("_")?"_":"-";
-    const prefix = v.name.includes(separator)?v.name.split(separator)[0]:"";
+	  const separator = v.game_vehicle_id.includes("_")?"_":"-";
+    const prefix = v.game_vehicle_id.includes(separator)?v.game_vehicle_id.split(separator)[0]:"";
     if(prefix!=lastPrefix && isDisplayed ){
       const breaker = document.createElement('div');
       breaker.classList.add("row-break");
