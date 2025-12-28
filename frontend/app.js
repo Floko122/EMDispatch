@@ -751,15 +751,15 @@ function renderEvents() {
     }
     container.appendChild(el);
   }
-  if(Array.from(difference(events, lastEvents)).length){
+  let play_sound=false;
+  Array.from(difference(events, lastEvents)).map(eventForID).forEach(e=> {if(e.created_by=="game")play_sound=true;});
+  if(play_sound){
     phoneSound.load();
     phoneSound.play();
   }
   lastEvents=events;
 }
 function eventForID(id){
-  console.log(state.events,id);
-  console.log(state.events.find(ev=>ev.id==id));
   return  state.events.find(ev=>ev.id==id);
 }
 
@@ -834,7 +834,6 @@ async function pollLogs() {
     const rows = data.logs || [];
     if (rows.length) {
       $('#activityLog').innerHTML = '';
-      console.log(rows);
       rows.forEach(r => pushLogRow(r));
     }
   } catch {}
