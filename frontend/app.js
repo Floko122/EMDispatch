@@ -451,6 +451,13 @@ function renderMap() {
 const modal = $('#assignModal');
 $('#closeAssign').addEventListener('click', () => {modal.classList.add('hidden'); sendNotesAsync(modalEvent);});
 $('#submitAssign').addEventListener('click', submitAssign);
+
+document.addEventListener('keyup', (e) => {
+  if(!modal.classList.contains("hidden")){
+    if (e.code === "Escape"){modal.classList.add('hidden'); sendNotesAsync(modalEvent);}
+    else if (e.code === "Enter") submitAssign();
+  }
+});
 // Vehicle checklist + search box just above it
 const cont = $('#assignVehicles');
 const selection = $('#selectedVehicles');
