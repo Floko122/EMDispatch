@@ -16,6 +16,7 @@ const state = {
   mapNatural: {w:0, h:0},
   modId: null,
   activeVehTab: 'vehicles',
+  logs: [],
 };
 
 // Keep map drawing colors in sync with CSS custom properties.
@@ -690,28 +691,6 @@ function renderHospitals() {
   }
 }
 
-
-let audioUnlocked = false;
-async function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-
-  // “Prime” audio: play a silent frame then pause (works in many browsers)
-  const a = new Audio();
-  a.volume = 0;
-  try {
-    await a.play();
-    a.pause();
-  } catch (e) {
-    // If this still fails, we’ll just keep audioUnlocked false
-    audioUnlocked = false;
-  }
-}
-
-// Call this once from a user gesture
-window.addEventListener("pointerdown", unlockAudio, { once: true });
-window.addEventListener("keydown", unlockAudio, { once: true });
-
 //Helper for intersect of sets
 const difference = (set1, set2) => new Set([...set1].filter(x => !set2.has(x)));
 let phoneSound = new Audio('./assets/phone.wav');
@@ -825,6 +804,7 @@ async function fetchState(showErr) {
   }
 }
 
+let messageSound = new Audio('./assets/Alarm.wav');
 async function pollLogs() {
   if (!state.sessionToken) return;
   try {
@@ -833,6 +813,12 @@ async function pollLogs() {
     const data = await res.json();
     if (!res.ok) return;
     const rows = data.logs || [];
+    
+    if(Array.from(difference(state.logs, rows)).length){
+      messageSound.load();
+      messageSound.play();
+    }
+    state.logs = rows;
     if (rows.length) {
       $('#activityLog').innerHTML = '';
       rows.forEach(r => pushLogRow(r));

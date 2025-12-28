@@ -92,6 +92,8 @@ CREATE TABLE IF NOT EXISTS events (
   CONSTRAINT fk_events_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+Alter Table events AUTO_INCREMENT = 1000;
+
 CREATE TABLE IF NOT EXISTS assignments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   session_id INT NOT NULL,
