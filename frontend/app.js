@@ -10,7 +10,6 @@ const state = {
   events: [],
   hospitals: [],
   players: [],
-  logsLastId: 0,
   grouping: null,
   zoom: 1,
   pan: {x:0, y:0},
@@ -195,23 +194,6 @@ window.addEventListener('mouseup', () => {
   dragContext.container?.classList.remove('dragging');
   dragContext = null;
 });
-/*//@Deprecated
-$('#panel-vehicles').querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    $('#panel-vehicles').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.activeVehTab = btn.dataset.tab;
-    if (state.activeVehTab === 'vehicles') {
-      $('#vehiclesList').classList.remove('hidden');
-      $('#hospitalsList').classList.add('hidden');
-    } else {
-      $('#hospitalsList').classList.remove('hidden');
-      $('#vehiclesList').classList.add('hidden');
-      renderHospitals();
-    }
-  });
-});
-*/
 
 const mapImg = $('#mapImage');
 const mapCanvas = $('#mapCanvas');
@@ -612,8 +594,7 @@ async function loadAssignedVehiclesAsync(ev) {
   sel.innerHTML="loading ...";
   const result = await api('events_get_vehicles', {event_id: ev.id});
   sel.innerHTML="";
-  //var names = 
-  result["vehicles"].forEach(e=>renderVehicle(e,sel,""));//.sort().join("");//`<div class="selectedVehicles">${e.name}</div>`
+  result["vehicles"].forEach(e=>renderVehicle(e,sel,""));
 }
 
 async function loadNotesAsync(ev) {
@@ -667,101 +648,9 @@ function renderVehicles() {
   state.vehicles.forEach(v =>
       {
         lastPrefix=renderVehicle(v,container,lastPrefix);
-        //lastPrefix = checkNameForSeparator(v,box,lastPrefix);
-        //box.appendChild(vehicleItem(v,s));
       }
     );
-    /*//Code to use a status based search may be removed
-  const byStatus = {};
-  for (const v of state.vehicles) {
-    if (!byStatus[v.status]) byStatus[v.status] = [];
-    byStatus[v.status].push(v);
-  }
-  Object.values(byStatus).forEach(arr => arr.sort((a,b) => (a.name||'').localeCompare(b.name||'')));
-
-  container.innerHTML = '';
-  const statuses = Object.keys(byStatus).map(Number).sort((a,b)=>a-b);
-  const grouping = state.grouping;
-
-  for (const s of statuses) {
-    if(!(s in status_visible)){
-      status_visible[s]= s!=2;//state 2 is hidden by default
-    }
-    const title = document.createElement('div');
-    title.className = 'group-title collapsible';
-    title.onclick = function() { toggleCollapse(title,s); };
-    title.textContent = `Status ${s}`;
-    container.appendChild(title);
-    const box = document.createElement('div');
-    box.style.display = status_visible[s]?"grid":"none";
-    box.classList.add("checklist");
-    container.appendChild(box);
-
-    let items = byStatus[s];
-
-    if (grouping && grouping.groups) {
-      for (const [gname, rule] of Object.entries(grouping.groups)) {
-        const matches = items.filter(v => {
-          const idOk = rule.ids ? rule.ids.includes(v.id) : true;
-          const typeOk = rule.types ? rule.types.includes(v.type) : true;
-          return idOk && typeOk;
-        });
-        if (!matches.length) continue;
-        const gt = document.createElement('div');
-        gt.className = 'meta'; gt.textContent = `— ${gname}`;
-        box.appendChild(gt);
-        var lastPrefix="";
-        matches.forEach(
-          v => {
-            lastPrefix = checkNameForSeparator(v,box,lastPrefix);
-            box.appendChild(vehicleItem(v,s));
-          }
-        );
-        const matchIds = new Set(matches.map(m=>m.id));
-        items = items.filter(v => !matchIds.has(v.id));
-      }
-      if (items.length) {
-        const gt = document.createElement('div');
-        gt.className = 'meta'; gt.textContent = '— Other';
-        box.appendChild(gt);
-      }
-    }
-    var lastPrefix="";
-    items.forEach(v =>
-      {
-        lastPrefix=renderVehicle(v,box,lastPrefix);
-        //lastPrefix = checkNameForSeparator(v,box,lastPrefix);
-        //box.appendChild(vehicleItem(v,s));
-      }
-    );
-  }*/
 }
-/*//@Deprecated
-function checkNameForSeparator(v,box,lastPrefix){
-  const separator = v.name.includes("_")?"_":"-";
-  const prefix = v.name.includes(separator)?v.name.split(separator)[0]:"";
-  if(lastPrefix!="" && lastPrefix!=prefix){
-    const rule = document.createElement('hr');
-    rule.classList.add("row-break");
-    box.appendChild(rule);
-    lastPrefix=prefix;
-  }else if(lastPrefix==""){
-    lastPrefix=prefix;
-  }
-  return lastPrefix;
-}
-
-function vehicleItem(v,s) {
-  const el = document.createElement('div');
-  el.className = 'item';
-  const label = v.name || v.type || v.game_vehicle_id || ('Vehicle #' + v.id);
-  const player = (state.players.find(p => p.id === v.assigned_player_id)?.name) || '—';
-  el.innerHTML = `
-    <div class="selectedVehicles"><b>${label}</b>${s==3?`<button onclick='sendHome(${v.id}).then(() => this.remove())'>🔙</button>`:""}</div>
-  `;
-  //<div class="meta">id:${v.id} • status:${v.status} • pos:${Math.round(v.x)},${Math.round(v.y)} • player:${player}</div>
-  return el;
-}*/
 
 async function sendHome(vehicle_id){
   var vehicle_ids = [vehicle_id];
@@ -878,21 +767,16 @@ function pushLogRow(row) {
   const cont = $('#activityLog');
   const el = document.createElement('div');
   el.className = 'row';
-  el.innerHTML = `<span class="time">${new Date(row.created_at).toLocaleTimeString()}</span>
-                  ${row.entity_id ? `<button onclick='openAssignModal(eventForID(${row.entity_id}))'>📂</button>`:""}
+  el.innerHTML = `<span class="time">${new Date(row.updated_at).toLocaleTimeString()}</span>
+                  ${row.entity_id ? `<span >${row.entity_id}:</span>`:""}
+                  ${row.event_id ? `<button onclick='openAssignModal(eventForID(${row.event_id}))'>📂</button>`:""}
                   <!--<span class="type">[${row.type}]</span> 
                   ${row.meta ? `<span class="meta"> ${JSON.stringify(row.meta)}</span>` : ''}-->
                   ${row.message}
                   `;
-  cont.appendChild(el);
+  cont.append(el);
   cont.scrollTop = cont.scrollHeight;
 }
-/*@Deprecated
-$('#clearLog').addEventListener('click', () => {
-  $('#activityLog').innerHTML = '';
-  state.logsLastId = 0;
-});
-*/
 async function api(action, payload={}, method='POST') {
   const url = `${state.apiBase}?action=${encodeURIComponent(action)}`;
   const body = Object.assign({}, payload, {session_token: state.sessionToken});
@@ -900,7 +784,6 @@ async function api(action, payload={}, method='POST') {
     method, headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body)
   });
-  //console.log(await res.text());
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -933,7 +816,6 @@ async function fetchState(showErr) {
     }
 
     renderVehicles();
-    //if (state.activeVehTab === 'hospitals') 
     renderHospitals();
     renderEvents();
     renderMap();
@@ -945,14 +827,15 @@ async function fetchState(showErr) {
 async function pollLogs() {
   if (!state.sessionToken) return;
   try {
-    const url = `${state.apiBase}?action=logs&session_token=${encodeURIComponent(state.sessionToken)}&since_id=${state.logsLastId}`;
+    const url = `${state.apiBase}?action=logs&session_token=${encodeURIComponent(state.sessionToken)}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) return;
     const rows = data.logs || [];
     if (rows.length) {
+      $('#activityLog').innerHTML = '';
+      console.log(rows);
       rows.forEach(r => pushLogRow(r));
-      state.logsLastId = rows[rows.length - 1].id;
     }
   } catch {}
 }

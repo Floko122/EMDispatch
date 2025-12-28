@@ -9,39 +9,27 @@
 <body>
   <header class="topbar">
     <div class="brand">EM Dispatcher</div>
+    <div id="time-panel"></div>
     <div class="settings">
       <label style="display:none">API Base: <input style="display:none" id="apiBase" type="text" placeholder="../backend/api.php" value="<?php  echo dirname($_SERVER['PHP_SELF'])."/../backend/api.php";?>"/></label>
-      <label>Session Token: <input id="sessionToken" placeholder="abc-123" <?php  
+      <label>Session Token: <input id="sessionToken" placeholder="a123" <?php  
 			if(isset($_GET['session_token']))
 				echo 'value="'.$_GET['session_token'].'"';
 			?>/></label>
       <button id="saveSettings">Save</button>
       <button id="reloadBtn" title="Reload state">↻</button>
     </div>
-    <div id="time-panel"></div>
-    <div class="panel-toggles">
-      Panels:
-      <label><input type="checkbox" data-toggle="panel-map" checked> Map</label>
-      <label><input type="checkbox" data-toggle="panel-vehicles" checked> Vehicles</label>
-      <label><input type="checkbox" data-toggle="panel-events" checked> Events</label>
-      <label><input type="checkbox" data-toggle="panel-log" checked> Log</label>
-    </div>
   </header>
 <?php  
 if(isset($_GET['session_token']))
 	echo '<script>saveSettings();</script>';
 ?>
-  <!-- Resizable 2x2 grid with draggable gutters -->
   <main class="grid" id="grid">
     <!-- Row 1 -->
      <div class="grid-col2" id="grid-left">
         <section class="panel" id="panel-map" style="grid-column: 1; grid-row: 1;">
           <div class="panel-header">
             <h2>Map</h2>
-            <div class="panel-actions">
-              <!--<button class="hide-panel" data-panel="panel-map">Hide</button>
-              <button class="detach" data-panel="panel-map">Pop-out</button>-->
-            </div>
           </div>
           <div class="map-wrapper" id="mapWrapper">
             <img id="mapImage" src="" alt="Map"/>
@@ -57,25 +45,12 @@ if(isset($_GET['session_token']))
         <section class="panel panel-log" id="panel-log">
           <div class="panel-header">
             <h2>Activity Log</h2>
-            <div class="panel-actions">
-              <!--<button class="hide-panel" data-panel="panel-log">Hide</button>
-              <button class="detach" data-panel="panel-log">Pop-out</button>
-              <button id="clearLog">Clear</button>-->
-            </div>
           </div>
           <div class="panel-body log" id="activityLog"></div>
         </section>
         <section class="panel panel-hospitals" id="panel-hospitals">
           <div class="panel-header">
             <h2>Hospitals</h2>
-            <!--<div class="tabs">
-              <button class="tab active" data-tab="vehicles">Vehicles</button>
-              <button class="tab" data-tab="hospitals">Hospitals</button>
-            </div>-->
-            <div class="panel-actions">
-              <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
-              <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
-            </div>
           </div>
           <div class="panel-body">
             <div id="hospitalsList"></div>
@@ -91,14 +66,6 @@ if(isset($_GET['session_token']))
       <section class="panel" id="panel-vehicles" style="grid-column: 1; grid-row: 1;">
         <div class="panel-header">
           <h2>Vehicles</h2>
-          <!--<div class="tabs">
-            <button class="tab active" data-tab="vehicles">Vehicles</button>
-            <button class="tab" data-tab="hospitals">Hospitals</button>
-          </div>-->
-          <div class="panel-actions">
-            <!--<button class="hide-panel" data-panel="panel-vehicles">Hide</button>
-            <button class="detach" data-panel="panel-vehicles">Pop-out</button>-->
-          </div>
         </div>
         <div class="panel-body ">
           <div id="vehiclesList"></div>
@@ -111,10 +78,6 @@ if(isset($_GET['session_token']))
       <section class="panel" id="panel-events" style="grid-column: 1; grid-row: 3;">
         <div class="panel-header">
           <h2>Events</h2>
-          <div class="panel-actions">
-            <!--<button class="hide-panel" data-panel="panel-events">Hide</button>
-            <button class="detach" data-panel="panel-events">Pop-out</button>-->
-          </div>
         </div>
         <div class="panel-body" id="eventsList"></div>
       </section>

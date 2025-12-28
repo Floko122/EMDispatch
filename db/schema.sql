@@ -137,12 +137,17 @@ CREATE TABLE IF NOT EXISTS commands (
 CREATE TABLE IF NOT EXISTS activity_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   session_id INT NOT NULL,
-  type ENUM('vehicle','hospital','event','command') NOT NULL,
-  entity_id INT NULL,
-  message VARCHAR(512) NOT NULL,
+  type ENUM('global','event','vehicle') NOT NULL,
+  entity_id VARCHAR(255) NULL,
+  event_id INT NULL,
+  message VARCHAR(20) NOT NULL,
+  long_message VARCHAR(512) NOT NULL,
+  state ENUM('active','inactive') NOT NULL,
   meta JSON NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_session (session_id, id),
+  UNIQUE KEY uniq_activity_log (session_id, entity_id, message),
   CONSTRAINT fk_logs_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

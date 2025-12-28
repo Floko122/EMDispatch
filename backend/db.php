@@ -48,10 +48,12 @@ function require_session($pdo, $token) {
     return $session;
 }
 
+//@Deprecated
 function log_activity($pdo, $session_id, $type, $entity_id, $message, $meta = []) {
-    $stmt = $pdo->prepare('INSERT INTO activity_logs (session_id, type, entity_id, message, meta) VALUES (?, ?, ?, ?, ?)');
+    /*$stmt = $pdo->prepare('INSERT INTO activity_logs (session_id, type, entity_id, message, meta) VALUES (?, ?, ?, ?, ?)');
     $stmt->execute([$session_id, $type, $entity_id, $message, json_encode($meta, JSON_UNESCAPED_UNICODE)]);
-    return $pdo->lastInsertId();
+    return $pdo->lastInsertId();*/
+    return [];
 }
 
 function upsert_player($pdo, $session_id, $player) {
@@ -123,6 +125,49 @@ function upsert_hospital($pdo, $session_id, $h) {
                     $h['icu_available'] ?? null, $h['ward_available'] ?? null, $h['icu_total'] ?? null, $h['ward_total'] ?? null]);
 }
 
+function upsert_messages($pdo, $session_id, $m) {
+    // $m: {"entity_id":"xy","message":"xy","long_message":"xyz","state":"active/inactive"}
+    //Preload Data
+    if (isset($m['entity_id'])&&isset($m['message'])) {//TODO check with empty string
+        $stmt = $pdo->prepare('Select * from activity_logs where session_id = ? and entity_id = ? and message = ?');
+        $stmt->execute([$session_id, $m['entity_id'], $m['message']]);
+        $saved_data = $stmt->fetch();
+    }else{
+        $saved_data = [];
+    }
+    //Get event id (which is from here an event not! a vehicle)
+    if(isset($m['entity_id'])&&$m['entity_id']!==''){
+        $stmt = $pdo->prepare('Select event_id from assignments inner join vehicles on assignments.session_id= vehicles.session_id and vehicle_id=vehicles.id where vehicles.session_id = ? and game_vehicle_id = ?');
+        $stmt->execute([$session_id, $m['entity_id']]);
+        $event_data = $stmt->fetch();
+        if(!empty($event_data)){
+            $event_data["type"]="event";
+        }else{
+            $event_data["type"]="vehicle";
+        }
+    }else{
+        $event_data = [];
+    }
+
+    //Prepare Statement:
+    $stmt = $pdo->prepare('INSERT INTO activity_logs (session_id, type, entity_id, event_id, message, long_message, meta, state)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE event_id = VALUES(event_id), type= VALUES(type), long_message = VALUES(long_message), meta = VALUES(meta), state = VALUES(state)');
+    $stmt->execute([
+        $session_id, 
+        check_options("type",$event_data,$m,"global"),
+        check_options("entity_id",$saved_data,$m,default: NULL),
+        check_options("event_id",$event_data,$m,default: NULL),
+        check_options("message",$saved_data,$m,NULL),
+        check_options("long_message",$saved_data,$m,$m['message']),
+        json_encode($m),
+        check_options("state",$saved_data,$m,"active")
+    ]);
+
+    $stmt = $pdo->prepare('Select * from activity_logs where session_id = ? and entity_id = ? and message = ?');
+    $stmt->execute([$session_id, $m['entity_id'], $m['message']]);
+    return $stmt->fetch();
+}
 function upsert_event($pdo, $session_id, $e) {
     // $e: ['game_event_id' (nullable for frontend), 'name','x','y','status','created_by']
 

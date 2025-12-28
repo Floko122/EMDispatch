@@ -136,6 +136,7 @@ try {
             foreach (($data['players'] ?? []) as $p) { upsert_player($pdo, $sid, $p); }
             foreach (($data['vehicles'] ?? []) as $v) { upsert_vehicle($pdo, $sid, $v); }
             foreach (($data['hospitals'] ?? []) as $h) { upsert_hospital($pdo, $sid, $h); }
+            foreach (($data['messages'] ?? []) as $m) { upsert_messages($pdo, $sid, $m); }
             foreach (($data['events'] ?? []) as $e) { $e['created_by'] = 'game'; upsert_event($pdo, $sid, $e); }
 
             if(isset($data['time'] )){
@@ -605,9 +606,8 @@ try {
             $token = $_GET['session_token'] ?? null;
             $session = require_session($pdo, $token);
             $sid = $session['id'];
-            $since_id = isset($_GET['since_id']) ? (int)$_GET['since_id'] : 0;
-            $stmt = $pdo->prepare('SELECT * FROM activity_logs WHERE session_id = ? AND id > ? ORDER BY id ASC LIMIT 1000');
-            $stmt->execute([$sid, $since_id]);
+            $stmt = $pdo->prepare('SELECT * FROM activity_logs WHERE session_id = ? ORDER BY updated_at DESC LIMIT 30');
+            $stmt->execute([$sid]);
             $rows = $stmt->fetchAll();
             respond_json(200, ['logs'=>$rows]);
             break;

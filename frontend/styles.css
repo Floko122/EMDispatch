@@ -84,7 +84,7 @@ button:disabled {
 }
 .brand { font-weight: 700; letter-spacing: .5px; }
 .settings label { margin-right: 10px; font-size: 14px; }
-.settings input  textarea { background: #0d1a3a; color: var(--text); border: 1px solid #1d2a55; padding: 6px 8px; border-radius: 8px; }
+.settings input  { background: #0d1a3a; color: var(--text); border: 1px solid #1d2a55; padding: 6px 8px; border-radius: 8px; }
 .settings button { margin-left: 6px; padding: 6px 10px; border-radius: 8px; border: 1px solid #2a3b74; background: #13214a; color: var(--text); cursor: pointer; }
 .panel-toggles label { margin-right: 8px; font-size: 13px; color: var(--muted); }
 
@@ -155,7 +155,12 @@ button:disabled {
   background: #15234c; border: 1px solid #2a3b74; color: var(--text);
   border-radius: 10px; padding: 6px 10px; margin-left: 6px; cursor: pointer;
 }
-.panel-body { padding: 10px; overflow: auto; }
+.panel-body {
+  padding: 10px;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
 /* Tabs in vehicles panel */
 .tabs { display: flex; gap: 6px; margin-left: auto; margin-right: 6px; }
@@ -210,7 +215,15 @@ button:disabled {
 .group-title { color: var(--muted); margin: 10px 0 4px; border-bottom: 1px dashed #2a3a74; padding-bottom: 4px; cursor:help;}
 
 /* Log */
-.log { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+.panel-row-log{
+  align-items: stretch;
+  flex-wrap: nowrap;
+  min-height: 0;
+  height: 100%;
+}
+.panel-log { display: flex;  flex-direction: column;  min-height: 0; }
+.log { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px;
+  overflow-y: auto; min-height: 0; flex: 1 1 auto;}
 .log .row { padding: 6px 8px; border-bottom: 1px dashed #223368; }
 .log .row .time { color: var(--muted); margin-right: 8px; }
 .log .row .type { font-weight: 700; margin-right: 6px; }
@@ -229,7 +242,7 @@ button:disabled {
 hr{ margin-top: 3pt !important; margin-bottom: 3pt!important;}
 .modal-footer button { padding: 8px 12px; border: 1px solid #2a3b74; background: #15234c; color: var(--text); border-radius: 10px; cursor: pointer; }
 .form-row { margin: 10px 0; }
-.checklist { max-height: 50vh; overflow: auto; border: 1px solid #26366d; border-radius: 8px; padding: 6px; display: grid;
+.checklist {overflow: auto; border: 1px solid #26366d; border-radius: 8px; padding: 6px; display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150pt, max-content));}
 
 /* Detachable (pop-out) */
