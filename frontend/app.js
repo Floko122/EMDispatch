@@ -812,16 +812,17 @@ async function pollLogs() {
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) return;
-    const rows = data.logs || [];
-    
+    const rows = new Set(data.logs || []);
     if(Array.from(difference(state.logs, rows)).length){
-      messageSound.load();
-      messageSound.play();
+      //Sounds not working for now
+      //messageSound.load();
+      //messageSound.play();
     }
     state.logs = rows;
-    if (rows.length) {
+    if (rows.size) {
       $('#activityLog').innerHTML = '';
       rows.forEach(r => pushLogRow(r));
+	    $('#activityLog').scrollTop=0;	
     }
   } catch {}
 }
