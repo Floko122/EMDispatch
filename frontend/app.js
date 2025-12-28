@@ -508,12 +508,12 @@ function renderList(first=false) {
   let lastPrefix = '';
   base.forEach(v => {lastPrefix=renderVehicle(v,cont,lastPrefix,matches,selection,modes,true,prevChecked)});
 }
-function renderState(status, cls_nr=-1){
+function renderState(status, cls_nr=-1,title=""){
   if(cls_nr==-1){
     cls_nr=status;
   }
   const cls = Number.isFinite(cls_nr) ? `status-${cls_nr}` : 'status-unknown';
-  return `<span class="status-badge ${cls}">${status}</span>`;
+  return `<span class="status-badge ${cls}" ${title?`title="${title}"`:""}>${status}</span>`;
 }
 function renderVehicle(v, parent, lastPrefix,filter=v=>true,selection=null, modes=null, includeCheckbox=false,prevChecked=null){
     const isDisplayed= filter(v);
@@ -752,6 +752,7 @@ function eventForID(id){
 
 function pushLogRow(row) {
   const cont = $('#activityLog');
+  const states = $('#game-states');
   const el = document.createElement('div');
   el.className = 'row';
   el.innerHTML = `<span class="time">${new Date(row.updated_at).toLocaleTimeString()}</span>
@@ -759,9 +760,14 @@ function pushLogRow(row) {
                   ${row.event_id ? `<button onclick='openAssignModal(eventForID(${row.event_id}))'>📂</button>`:""}
                   <!--<span class="type">[${row.type}]</span> 
                   ${row.meta ? `<span class="meta"> ${JSON.stringify(row.meta)}</span>` : ''}-->
-                  ${row.message}
+                  ${row.long_message}
                   `;
   cont.append(el);
+  if(row.state=="active" && row.type == "global"){
+    const stateEl = document.createElement('div');
+    stateEl.innerHTML = renderState(row.message,3,row.long_message);
+    states.append(stateEl);
+  }
   cont.scrollTop = cont.scrollHeight;
 }
 async function api(action, payload={}, method='POST') {
@@ -828,8 +834,9 @@ async function pollLogs() {
     state.logs = rows;
     if (rows.size) {
       $('#activityLog').innerHTML = '';
+      $('#game-states').innerHTML = '';
       rows.forEach(r => pushLogRow(r));
-	    $('#activityLog').scrollTop=0;	
+	    $('#activityLog').scrollTop=0;	      
     }
   } catch {}
 }

@@ -10,6 +10,7 @@
   <header class="topbar">
     <div class="brand">EM Dispatcher</div>
     <div id="time-panel"></div>
+    <div id="game-states"></div>
     <div class="settings">
       <label style="display:none">API Base: <input style="display:none" id="apiBase" type="text" placeholder="../backend/api.php" value="<?php  echo dirname($_SERVER['PHP_SELF'])."/../backend/api.php";?>"/></label>
       <label>Session Token: <input id="sessionToken" placeholder="a123" <?php  
