@@ -681,8 +681,8 @@ function renderHospitals() {
   container.appendChild(el);
 
   for (const h of list) {
-    var icu_ratio=h.icu_available==0?4:(h.icu_available/h.icu_total<0.2?3:2);
-    var ward_ratio= h.ward_available==0?4:(h.ward_available/h.ward_total<0.2?3:2);
+    var icu_ratio=h.icu_available==0?4:(h.icu_available<2?3:2);
+    var ward_ratio= h.ward_available==0?4:(h.ward_available<2?3:2);
     const el = document.createElement('tr');
     el.className = 'item';
     el.innerHTML = `
