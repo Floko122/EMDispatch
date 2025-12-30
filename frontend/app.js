@@ -17,6 +17,7 @@ const state = {
   modId: null,
   activeVehTab: 'vehicles',
   logs: [],
+  logSince: 0,
   highlightedEventId: null,
 };
 
@@ -827,7 +828,7 @@ function pushLogRow(row) {
     assignBtn.addEventListener('focus', highlightOn);
     assignBtn.addEventListener('blur', highlightOff);
   }
-  cont.append(el);
+  cont.insertBefore(el, cont.firstChild);
   if(row.state=="active" && row.type == "global"){
     const stateEl = document.createElement('div');
     stateEl.innerHTML = renderState(row.message,3,row.long_message);
@@ -886,24 +887,29 @@ let messageSound = new Audio('./assets/Alarm.wav');
 async function pollLogs() {
   if (!state.sessionToken) return;
   try {
-    const url = `${state.apiBase}?action=logs&session_token=${encodeURIComponent(state.sessionToken)}`;
+    const url = `${state.apiBase}?action=logs&session_token=${encodeURIComponent(state.sessionToken)}&since=${state.logSince}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) return;
-    const rows = new Set(data.logs || []);
-    if(Array.from(difference(state.logs, rows)).length){
+    const rows = data.logs || [];
+    if(rows.length){
+      var newStamp=rows[rows.length-1]["updated_at"];
+      if(newStamp==state.logSince)return;//Handles SQL imprecision bug
+      state.logSince = newStamp;
       //Sounds not working for now
-      //messageSound.load();
-      //messageSound.play();
-    }
-    state.logs = rows;
-    if (rows.size) {
+      messageSound.load();
+      messageSound.play();
+      var idsInNew = rows.map(e=>e["id"]);
+      state.logs = state.logs.filter(e=>!idsInNew.includes(e["id"])).concat(rows);
+      //state.logs = rows;
       $('#activityLog').innerHTML = '';
       $('#game-states').innerHTML = '';
-      rows.forEach(r => pushLogRow(r));
+      state.logs.forEach(r => pushLogRow(r));
 	    $('#activityLog').scrollTop=0;	      
     }
-  } catch {}
+  } catch (ex){
+    console.log(ex);
+  }
 }
 
 function toggleCollapse(node,state){

@@ -604,10 +604,11 @@ try {
 
         case 'logs':
             $token = $_GET['session_token'] ?? null;
+            $since = $_GET['since'] ?? 0;
             $session = require_session($pdo, $token);
             $sid = $session['id'];
-            $stmt = $pdo->prepare('SELECT * FROM activity_logs WHERE session_id = ? ORDER BY updated_at DESC LIMIT 30');
-            $stmt->execute([$sid]);
+            $stmt = $pdo->prepare('SELECT * FROM activity_logs WHERE session_id = ? and updated_at >? ORDER BY updated_at ASC LIMIT 30');
+            $stmt->execute([$sid, $since]);
             $rows = $stmt->fetchAll();
             respond_json(200, ['logs'=>$rows]);
             break;
