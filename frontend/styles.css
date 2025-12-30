@@ -211,6 +211,10 @@ button:disabled {
   background: #121c3c; border: 1px solid #273767; border-radius: 12px;
   padding: 8px; margin-bottom: 6px;
 }
+.item.highlighted {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(110,168,254,0.35);
+}
 .item .meta { color: var(--muted); font-size: 12px; }
 .group-title { color: var(--muted); margin: 10px 0 4px; border-bottom: 1px dashed #2a3a74; padding-bottom: 4px; cursor:help;}
 

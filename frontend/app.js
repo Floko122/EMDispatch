@@ -17,7 +17,38 @@ const state = {
   modId: null,
   activeVehTab: 'vehicles',
   logs: [],
+  highlightedEventId: null,
 };
+
+function setHighlightedEvent(eventId) {
+  const normalized = eventId == null ? null : Number(eventId);
+  if (state.highlightedEventId === normalized) return;
+  state.highlightedEventId = normalized;
+  syncEventListHighlights();
+  renderMap();
+}
+
+function syncEventListHighlights() {
+  const highlightedId = state.highlightedEventId;
+  $$('#eventsList .item').forEach(item => {
+    const itemId = item.dataset.eventId ? parseInt(item.dataset.eventId, 10) : null;
+    item.classList.toggle('highlighted', highlightedId != null && itemId === highlightedId);
+  });
+}
+
+function findEventNearPointer(clientX, clientY, hitRadius = 12) {
+  if (!state.events.length) return null;
+  const pos = clientToCanvas(clientX, clientY);
+  for (const ev of state.events) {
+    const screen = toScreen(worldToCanvas(ev));
+    const dx = screen.x - pos.x;
+    const dy = screen.y - pos.y;
+    if (Math.sqrt(dx*dx + dy*dy) <= hitRadius) {
+      return ev.id;
+    }
+  }
+  return null;
+}
 
 // Keep map drawing colors in sync with CSS custom properties.
 const cssVarCache = new Map();
@@ -241,6 +272,7 @@ let isPanning = false, lastMouse = {x:0,y:0};
 mapWrapper.addEventListener('mousedown', (e) => {
   if (e.button === 0 && !e.shiftKey) {
     isPanning = true; lastMouse = {x:e.clientX, y:e.clientY};
+    setHighlightedEvent(null);
   }
 });
 mapWrapper.addEventListener('mousemove', (e) => {
@@ -249,9 +281,15 @@ mapWrapper.addEventListener('mousemove', (e) => {
     state.pan.y += (e.clientY - lastMouse.y);
     lastMouse = {x:e.clientX, y:e.clientY};
     renderMap();
+    return;
   }
+  const hovered = findEventNearPointer(e.clientX, e.clientY);
+  setHighlightedEvent(hovered);
 });
 window.addEventListener('mouseup', () => isPanning = false);
+mapWrapper.addEventListener('mouseleave', () => {
+  if (!isPanning) setHighlightedEvent(null);
+});
 
 // ⬇️ UPDATED: zoom anchored at mouse pointer (trackpad + wheel friendly)
 mapWrapper.addEventListener('wheel', (e) => {
@@ -290,15 +328,10 @@ mapWrapper.addEventListener('contextmenu', (e) => {
 
 // Left-click on event: open assign modal if clicked over an event icon
 mapWrapper.addEventListener('click', (e) => {
-  const pos = clientToCanvas(e.clientX, e.clientY);
-  const hits = [];
-  for (const ev of state.events) {
-    const p = worldToCanvas({x: ev.x, y: ev.y});
-    const dx = (p.x * state.zoom + state.pan.x) - pos.x;
-    const dy = (p.y * state.zoom + state.pan.y) - pos.y;
-    if (Math.sqrt(dx*dx + dy*dy) <= 12) { hits.push(ev); }
-  }
-  if (hits.length) openAssignModal(hits[0]);
+  const hoveredId = findEventNearPointer(e.clientX, e.clientY);
+  if (!hoveredId) return;
+  const eventObj = state.events.find(ev => ev.id === hoveredId);
+  if (eventObj) openAssignModal(eventObj);
 });
 
 function clientToCanvas(cx, cy) {
@@ -368,20 +401,31 @@ function renderMap() {
 
   for (const ev of state.events) {
     const p = worldToCanvas(ev);
+    const isHighlighted = state.highlightedEventId === ev.id;
+    const baseRadius = Math.min(10/state.zoom,10);
+    const radius = isHighlighted ? baseRadius * 1.4 : baseRadius;
     ctx.beginPath();
-    const diameter = Math.min(10/state.zoom,10);
-    ctx.arc(p.x, p.y, diameter, 0, Math.PI*2);
+    ctx.arc(p.x, p.y, radius, 0, Math.PI*2);
     ctx.fillStyle = accentColor;
     ctx.fill();
-    ctx.lineWidth = 2 / state.zoom;
-    ctx.strokeStyle = accentOutline;
+    ctx.lineWidth = (isHighlighted ? 3 : 2) / state.zoom;
+    ctx.strokeStyle = isHighlighted ? '#ffffff' : accentOutline;
     ctx.stroke();
+    if (isHighlighted) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius + 6/state.zoom, 0, Math.PI*2);
+      ctx.lineWidth = 1 / state.zoom;
+      ctx.strokeStyle = 'rgba(110,168,254,0.45)';
+      ctx.stroke();
+      ctx.restore();
+    }
 
     const text = ev.name || 'Event';
     const tw = ctx.measureText(text).width;
     const th = fontSize;
-    const lx = p.x + diameter+2;
-    const ly = p.y + diameter/2 -1;
+    const lx = p.x + radius + 2;
+    const ly = p.y + radius/2 -1;
     ctx.lineWidth = 3 / state.zoom;
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
     ctx.fillStyle = textFill;
@@ -711,6 +755,7 @@ function renderEvents() {
     events.add(ev.id);
     const el = document.createElement('div');
     el.className = 'item';
+    el.dataset.eventId = ev.id;
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <div>
@@ -736,8 +781,14 @@ function renderEvents() {
         }
       });
     }
+    el.addEventListener('mouseenter', () => setHighlightedEvent(ev.id));
+    el.addEventListener('mouseleave', () => setHighlightedEvent(null));
     container.appendChild(el);
   }
+  if (state.highlightedEventId && !sorted.some(ev => ev.id === state.highlightedEventId)) {
+    state.highlightedEventId = null;
+  }
+  syncEventListHighlights();
   let play_sound=false;
   Array.from(difference(events, lastEvents)).map(eventForID).forEach(e=> {if(e.created_by=="game")play_sound=true;});
   if(play_sound){
@@ -757,11 +808,25 @@ function pushLogRow(row) {
   el.className = 'row';
   el.innerHTML = `<span class="time">${new Date(row.updated_at).toLocaleTimeString()}</span>
                   ${row.entity_id ? `<span >${row.entity_id}:</span>`:""}
-                  ${row.event_id ? `<button onclick='openAssignModal(eventForID(${row.event_id}))'>📂</button>`:""}
+                  ${row.event_id ? `<button class="log-assign" data-log-event-id="${row.event_id}">📂</button>`:""}
                   <!--<span class="type">[${row.type}]</span> 
                   ${row.meta ? `<span class="meta"> ${JSON.stringify(row.meta)}</span>` : ''}-->
                   ${row.long_message}
                   `;
+  const assignBtn = el.querySelector('.log-assign');
+  if (assignBtn) {
+    const eventId = parseInt(assignBtn.dataset.logEventId, 10);
+    assignBtn.addEventListener('click', () => {
+      const ev = eventForID(eventId);
+      if (ev) openAssignModal(ev);
+    });
+    const highlightOn = () => setHighlightedEvent(eventId);
+    const highlightOff = () => setHighlightedEvent(null);
+    assignBtn.addEventListener('mouseenter', highlightOn);
+    assignBtn.addEventListener('mouseleave', highlightOff);
+    assignBtn.addEventListener('focus', highlightOn);
+    assignBtn.addEventListener('blur', highlightOff);
+  }
   cont.append(el);
   if(row.state=="active" && row.type == "global"){
     const stateEl = document.createElement('div');
