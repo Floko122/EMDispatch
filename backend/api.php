@@ -607,10 +607,21 @@ try {
             $since = $_GET['since'] ?? 0;
             $session = require_session($pdo, $token);
             $sid = $session['id'];
-            $stmt = $pdo->prepare('SELECT * FROM activity_logs WHERE session_id = ? and updated_at >? ORDER BY updated_at ASC LIMIT 30');
+            $stmt = $pdo->prepare('SELECT * FROM activity_logs WHERE session_id = ? and updated_at >? and state = \'active\' ORDER BY updated_at ASC LIMIT 30');
             $stmt->execute([$sid, $since]);
             $rows = $stmt->fetchAll();
             respond_json(200, ['logs'=>$rows]);
+            break;
+
+        
+        case 'log_viewed':
+            $token = $_GET['session_token'] ?? null;
+            $mid = $_GET['mid'] ?? 0;
+            $session = require_session($pdo, $token);
+            $sid = $session['id'];
+            $stmt = $pdo->prepare('UPDATE activity_logs set state=\'inactive\' WHERE session_id = ? and id =?');
+            $stmt->execute([$sid, $mid]);
+            respond_json(200, ['ok'=>true]);
             break;
 
         default:

@@ -810,6 +810,7 @@ function pushLogRow(row) {
   el.innerHTML = `<span class="time">${new Date(row.updated_at).toLocaleTimeString()}</span>
                   ${row.entity_id ? `<span >${row.entity_id}:</span>`:""}
                   ${row.event_id ? `<button class="log-assign" data-log-event-id="${row.event_id}">📂</button>`:""}
+                  ${row.event_id ? `<button onClick="log_viewed(${row.id})">❎</button>`:""}
                   <!--<span class="type">[${row.type}]</span> 
                   ${row.meta ? `<span class="meta"> ${JSON.stringify(row.meta)}</span>` : ''}-->
                   ${row.long_message}
@@ -901,15 +902,27 @@ async function pollLogs() {
       messageSound.play();
       var idsInNew = rows.map(e=>e["id"]);
       state.logs = state.logs.filter(e=>!idsInNew.includes(e["id"])).concat(rows);
-      //state.logs = rows;
-      $('#activityLog').innerHTML = '';
-      $('#game-states').innerHTML = '';
-      state.logs.forEach(r => pushLogRow(r));
-	    $('#activityLog').scrollTop=0;	      
+      renderLogs();
     }
   } catch (ex){
     console.log(ex);
   }
+}
+
+function renderLogs(){
+  //state.logs = rows;
+  $('#activityLog').innerHTML = '';
+  $('#game-states').innerHTML = '';
+  state.logs.forEach(r => pushLogRow(r));
+  $('#activityLog').scrollTop=0;	      
+}
+
+async function log_viewed(id){
+  const url = `${state.apiBase}?action=log_viewed&session_token=${encodeURIComponent(state.sessionToken)}&mid=${id}`;
+  const res = await fetch(url);
+  if (!res.ok) return;
+  state.logs = state.logs.filter(e=>e["id"]!=id);
+  renderLogs();
 }
 
 function toggleCollapse(node,state){
