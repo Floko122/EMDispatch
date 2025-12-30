@@ -802,12 +802,13 @@ function eventForID(id){
   return  state.events.find(ev=>ev.id==id);
 }
 
-function pushLogRow(row) {
+function pushLogRow(row,newMessage=false) {
   const cont = $('#activityLog');
   const states = $('#game-states');
   const el = document.createElement('div');
   el.className = 'row';
   el.innerHTML = `<span class="time">${new Date(row.updated_at).toLocaleTimeString()}</span>
+                  ${newMessage?'🔔':''}
                   ${row.entity_id ? `<span >${row.entity_id}:</span>`:""}
                   ${row.event_id ? `<button class="log-assign" data-log-event-id="${row.event_id}">📂</button>`:""}
                   ${row.event_id ? `<button onClick="log_viewed(${row.id})">❎</button>`:""}
@@ -902,18 +903,18 @@ async function pollLogs() {
       messageSound.play();
       var idsInNew = rows.map(e=>e["id"]);
       state.logs = state.logs.filter(e=>!idsInNew.includes(e["id"])).concat(rows);
-      renderLogs();
+      renderLogs(idsInNew);
     }
   } catch (ex){
     console.log(ex);
   }
 }
 
-function renderLogs(){
+function renderLogs(newIds=[]){
   //state.logs = rows;
   $('#activityLog').innerHTML = '';
   $('#game-states').innerHTML = '';
-  state.logs.forEach(r => pushLogRow(r));
+  state.logs.forEach(r => pushLogRow(r,newIds.includes(r["id"])));
   $('#activityLog').scrollTop=0;	      
 }
 
