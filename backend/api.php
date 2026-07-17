@@ -212,7 +212,11 @@ try {
             $players->execute([$sid]);
             $players = $players->fetchAll();
 
-            $vehicles = $pdo->prepare('SELECT * FROM vehicles WHERE session_id = ?');
+            $vehicles = $pdo->prepare("SELECT v.*, (SELECT a.event_id FROM assignments a
+                    JOIN events e ON e.id = a.event_id AND e.session_id = a.session_id
+                    WHERE a.session_id = v.session_id AND a.vehicle_id = v.id AND e.status != 'completed'
+                    LIMIT 1) AS event_id
+                FROM vehicles v WHERE v.session_id = ?");
             $vehicles->execute([$sid]);
             $vehicles = $vehicles->fetchAll();
 
@@ -629,6 +633,48 @@ try {
             $stmt = $pdo->prepare('UPDATE activity_logs set state=\'inactive\' WHERE session_id = ? and id =?');
             $stmt->execute([$sid, $mid]);
             respond_json(200, ['ok'=>true]);
+            break;
+
+        case 'stats':
+            // Statistik-Daten: alle Einsätze (inkl. abgeschlossener), Alarmierungen pro
+            // Fahrzeug (aus der Command-Historie) und Anzahl Sprechwünsche.
+            $token = $_GET['session_token'] ?? null;
+            $session = require_session($pdo, $token);
+            $sid = $session['id'];
+
+            // created_ts/updated_ts als Unix-Timestamps: zeitzonenunabhängig fürs Frontend
+            $stmt = $pdo->prepare('SELECT id, name, status, created_by, created_at, updated_at,
+                    UNIX_TIMESTAMP(created_at) AS created_ts, UNIX_TIMESTAMP(updated_at) AS updated_ts
+                FROM events WHERE session_id = ?');
+            $stmt->execute([$sid]);
+            $events = $stmt->fetchAll();
+
+            // Alarmierungen: assign-Commands bleiben als Historie erhalten (assignments nicht)
+            $stmt = $pdo->prepare("SELECT payload FROM commands WHERE session_id = ? AND type = 'assign'");
+            $stmt->execute([$sid]);
+            $alarmCounts = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $p = json_decode($row['payload'], true);
+                $gid = $p['game_vehicle_id'] ?? null;
+                if ($gid) $alarmCounts[$gid] = ($alarmCounts[$gid] ?? 0) + 1;
+            }
+            $alarms = [];
+            if ($alarmCounts) {
+                $in = implode(',', array_fill(0, count($alarmCounts), '?'));
+                $stmt = $pdo->prepare("SELECT game_vehicle_id, name FROM vehicles WHERE session_id = ? AND game_vehicle_id IN ($in)");
+                $stmt->execute(array_merge([$sid], array_keys($alarmCounts)));
+                $names = [];
+                foreach ($stmt->fetchAll() as $v) $names[$v['game_vehicle_id']] = $v['name'];
+                foreach ($alarmCounts as $gid => $cnt) {
+                    $alarms[] = ['game_vehicle_id' => $gid, 'name' => $names[$gid] ?? $gid, 'count' => $cnt];
+                }
+            }
+
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM activity_logs WHERE session_id = ? AND (message LIKE '%prechwunsch%' OR long_message LIKE '%prechwunsch%')");
+            $stmt->execute([$sid]);
+            $talk = (int)$stmt->fetchColumn();
+
+            respond_json(200, ['ok' => true, 'events' => $events, 'alarms' => $alarms, 'talk_count' => $talk]);
             break;
 
         default:

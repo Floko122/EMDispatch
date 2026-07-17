@@ -21,3 +21,6 @@
 /fuel/app/config/crypt.php
 
 backend/config.php
+
+# Lokales Test-Setup (SQLite + Demo-Bridge)
+/test/
