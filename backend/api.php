@@ -212,10 +212,24 @@ try {
             $players->execute([$sid]);
             $players = $players->fetchAll();
 
+            // event_id = aktive Zuweisung; stale_* = Zuweisung an bereits beendeten Einsatz
+            // (fuer die "nicht eingerueckt"-Warnung im Frontend)
             $vehicles = $pdo->prepare("SELECT v.*, (SELECT a.event_id FROM assignments a
                     JOIN events e ON e.id = a.event_id AND e.session_id = a.session_id
                     WHERE a.session_id = v.session_id AND a.vehicle_id = v.id AND e.status != 'completed'
-                    LIMIT 1) AS event_id
+                    LIMIT 1) AS event_id,
+                (SELECT a.event_id FROM assignments a
+                    JOIN events e ON e.id = a.event_id AND e.session_id = a.session_id
+                    WHERE a.session_id = v.session_id AND a.vehicle_id = v.id AND e.status = 'completed'
+                    LIMIT 1) AS stale_event_id,
+                (SELECT e.name FROM assignments a
+                    JOIN events e ON e.id = a.event_id AND e.session_id = a.session_id
+                    WHERE a.session_id = v.session_id AND a.vehicle_id = v.id AND e.status = 'completed'
+                    LIMIT 1) AS stale_event_name,
+                (SELECT UNIX_TIMESTAMP(e.updated_at) FROM assignments a
+                    JOIN events e ON e.id = a.event_id AND e.session_id = a.session_id
+                    WHERE a.session_id = v.session_id AND a.vehicle_id = v.id AND e.status = 'completed'
+                    LIMIT 1) AS stale_event_ts
                 FROM vehicles v WHERE v.session_id = ?");
             $vehicles->execute([$sid]);
             $vehicles = $vehicles->fetchAll();

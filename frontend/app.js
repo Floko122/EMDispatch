@@ -556,13 +556,47 @@ function vehTypeLabel(v) {
 
 /* ============================ Fahrzeugliste ============================ */
 const vehOpen = {};
+// "Nicht eingerückt"-Warnung: Fahrzeug hängt in Status 3/4 an einem bereits
+// beendeten Einsatz — erst nach Karenzzeit ab Einsatzende, andere Status ignorieren.
+const STALE_GRACE_MS = 2 * 60 * 1000;
+const STALE_STATUSES = new Set([3, 4]);
+function staleInfo(v) {
+  if (v.stale_event_id == null || !STALE_STATUSES.has(+v.status)) return null;
+  if (v.stale_event_ts == null) return null;
+  const ts = v.stale_event_ts * 1000;
+  if (Date.now() - ts < STALE_GRACE_MS) return null;
+  return { name: v.stale_event_name || `#${v.stale_event_id}`, ts };
+}
+const staleWarned = new Set(); // game_vehicle_id -> Log-Eintrag schon geschrieben
+function trackStaleVehicles(vehicles) {
+  const current = new Set();
+  for (const v of vehicles) {
+    const s = staleInfo(v);
+    if (!s) continue;
+    current.add(v.game_vehicle_id);
+    if (!staleWarned.has(v.game_vehicle_id)) {
+      statusLog.unshift({
+        time: Date.now(),
+        kind: "msg",
+        text: `${v.name || v.game_vehicle_id}: Zugewiesener Einsatz seit ${fmtTime(s.ts)} beendet - Fahrzeug nicht eingerückt`,
+      });
+    }
+  }
+  for (const k of [...staleWarned]) if (!current.has(k)) staleWarned.delete(k);
+  current.forEach((k) => staleWarned.add(k));
+  if (statusLog.length > 120) statusLog.length = 120;
+}
 function vehicleCardHTML(v) {
+  const stale = staleInfo(v);
   const actions =
-    v.status == 3
+    v.status == 3 || stale
       ? `<button class="icon-btn sm ghost" title="Einrücken" onclick='sendHome(${v.id}).then(()=>fetchState(false))'>${icon("home")}</button>`
       : "";
+  const warn = stale
+    ? `<span class="stalewarn" title="Zugewiesener Einsatz seit ${fmtTime(stale.ts)} beendet.">${icon("exclamation")}</span>`
+    : "";
   const hl = state.highlightedVehicleId === v.id ? " highlighted" : "";
-  return `<div class="veh${v.status == 5 ? " talkwish" : ""}${hl}" data-vid="${v.id}" title="${v.name || v.game_vehicle_id} · Status ${v.status}">${renderState(v.status)}<span class="vn">${v.name || v.game_vehicle_id}</span><span class="vend">${actions}</span></div>`;
+  return `<div class="veh${v.status == 5 ? " talkwish" : ""}${hl}" data-vid="${v.id}" title="${v.name || v.game_vehicle_id} · Status ${v.status}">${renderState(v.status)}<span class="vn">${v.name || v.game_vehicle_id}</span><span class="vend">${warn}${actions}</span></div>`;
 }
 function groupHTML(k, vs) {
   const open = vehOpen[k] !== false;
@@ -1321,6 +1355,7 @@ async function fetchState(showErr) {
         String(data.time.time_minutes).padStart(2, "0");
     trackStatusChanges(state.vehicles);
     trackAdmissions(state.hospitals);
+    trackStaleVehicles(state.vehicles);
     // Sprechwuensche verwerfen, deren Fahrzeug nicht mehr existiert (z.B. nach Session-Reset)
     talkLog = talkLog.filter((e) =>
       state.vehicles.some(

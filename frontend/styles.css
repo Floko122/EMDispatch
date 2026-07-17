@@ -148,6 +148,11 @@ svg.i{ width:1em; height:1em; fill:currentColor; vertical-align:-.125em; }
   border-radius:6px; padding:2px 6px; min-height:26px; }
 .veh.dim{ opacity:.5; }
 .veh.highlighted{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(91,157,255,.4); }
+/* "Nicht eingerückt"-Warnung: rotes Ausrufezeichen, Details im Tooltip */
+.veh .stalewarn{ display:inline-flex; color:var(--bad); padding:0 2px;
+  cursor:help; animation:stalepulse 1.6s ease-in-out infinite; }
+.veh .stalewarn svg{ width:14px; height:14px; fill:currentColor; display:block; }
+@keyframes stalepulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
 .veh .st{ flex-shrink:0; min-width:22px; height:20px; font-size:11.5px; border-radius:2px; }
 .veh .vn{ font-weight:600; font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .veh .vt{ color:var(--muted2); font-size:10px; white-space:nowrap; }
