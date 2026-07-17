@@ -785,7 +785,7 @@ $("#closeAssign").addEventListener("click", () => {
 $("#assignSortDist").checked = localStorage.getItem("assignSortDist") !== "0";
 $("#assignSortDist").addEventListener("change", (e) => {
   localStorage.setItem("assignSortDist", e.target.checked ? "1" : "0");
-  renderList(false);
+  renderList();
 });
 $("#submitAssign").addEventListener("click", submitAssign);
 document.addEventListener("keyup", (e) => {
@@ -795,6 +795,11 @@ document.addEventListener("keyup", (e) => {
     sendNotesAsync(modalEvent);
   } else if (e.code === "Enter") submitAssign();
 });
+
+// Auswahl + Modi liegen nicht im DOM: sie überleben so das Neu-Rendern der
+// Liste (Suche/Sortierung) und ausgefilterte Fahrzeuge bleiben alarmierbar
+let assignSel = new Set();
+let assignSelModes = {};
 
 function buildDropdown(modeStr, id, selected) {
   if (!modeStr) return "";
@@ -835,20 +840,9 @@ function assignRowHTML(v, checked, mode) {
     ${buildDropdown(v.modes, v.id, mode)}
   </label>`;
 }
-function renderList(first = false) {
+function renderList() {
   const cont = $("#assignVehicles"),
     selection = $("#selectedVehicles");
-  const prevChecked = first
-    ? new Set()
-    : new Set(
-        Array.from(cont.querySelectorAll("input[type=checkbox]:checked")).map(
-          (b) => +b.value,
-        ),
-      );
-  const prevModes = {};
-  cont.querySelectorAll("select").forEach((s) => {
-    prevModes[+s.dataset.vid] = s.value;
-  });
   const term = $("#assignSearch").value.trim().toLowerCase();
   const matches = (v) => {
     if (!term) return true;
@@ -889,31 +883,44 @@ function renderList(first = false) {
       .map(
         (k) =>
           `<details class="vgroup" open><summary>${icon("chevron", "chev")}<span class="gname">${stationLabel(k)}</span><span class="count">${groups[k].length}</span></summary>
-      <div class="vlist">${groups[k].map((v) => assignRowHTML(v, prevChecked.has(v.id), prevModes[v.id])).join("")}</div></details>`,
+      <div class="vlist">${groups[k].map((v) => assignRowHTML(v, assignSel.has(v.id), assignSelModes[v.id])).join("")}</div></details>`,
       )
       .join("") ||
     `<div style="color:var(--muted);padding:6px">Keine passenden Kräfte.</div>`;
-  cont
-    .querySelectorAll("input[type=checkbox]")
-    .forEach((b) => b.addEventListener("change", updateChosen));
+  cont.querySelectorAll("input[type=checkbox]").forEach((b) =>
+    b.addEventListener("change", () => {
+      const id = +b.value;
+      if (b.checked) {
+        assignSel.add(id);
+        // Vorbelegten Modus übernehmen, falls das Dropdown nie angefasst wurde
+        const sel = cont.querySelector(`select[data-vid="${id}"]`);
+        if (sel && assignSelModes[id] == null) assignSelModes[id] = sel.value;
+      } else {
+        assignSel.delete(id);
+      }
+      updateChosen();
+    }),
+  );
+  cont.querySelectorAll("select").forEach((s) =>
+    s.addEventListener("change", () => {
+      assignSelModes[+s.dataset.vid] = s.value;
+    }),
+  );
   updateChosen();
   function updateChosen() {
-    const chosen = Array.from(
-      cont.querySelectorAll("input[type=checkbox]:checked"),
-    );
-    selection.innerHTML = chosen
-      .map((b) => {
-        const v = state.vehicles.find((x) => x.id == +b.value);
-        return `<span class="u">${v ? v.name || v.game_vehicle_id : "#" + b.value}<button data-vid="${b.value}">×</button></span>`;
+    selection.innerHTML = Array.from(assignSel)
+      .map((id) => {
+        const v = state.vehicles.find((x) => x.id == id);
+        return `<span class="u">${v ? v.name || v.game_vehicle_id : "#" + id}<button data-vid="${id}">×</button></span>`;
       })
       .join("");
     selection.querySelectorAll("button").forEach((btn) =>
       btn.addEventListener("click", () => {
-        const cb = cont.querySelector(`input[value="${btn.dataset.vid}"]`);
-        if (cb) {
-          cb.checked = false;
-          updateChosen();
-        }
+        const id = +btn.dataset.vid;
+        assignSel.delete(id);
+        const cb = cont.querySelector(`input[value="${id}"]`);
+        if (cb) cb.checked = false;
+        updateChosen();
       }),
     );
   }
@@ -966,31 +973,28 @@ function openAssignModal(ev) {
     o.textContent = p.name || p.player_id || "Spieler #" + p.id;
     sel.appendChild(o);
   }
+  assignSel = new Set();
+  assignSelModes = {};
   const sbox = $("#assignSearch");
   sbox.value = "";
-  sbox.oninput = () => renderList(false);
-  renderList(true);
+  sbox.oninput = () => renderList();
+  renderList();
   modal.classList.remove("hidden");
   sbox.focus();
 }
 async function submitAssign() {
-  const cont = $("#assignVehicles");
-  const boxes = Array.from(
-    cont.querySelectorAll("input[type=checkbox]:checked"),
-  );
-  if (!boxes.length) {
+  if (!assignSel.size) {
     alert("Mindestens eine Kraft auswählen");
     return;
   }
-  const vehicle_ids = boxes.map((b) => parseInt(b.value, 10));
+  const vehicle_ids = Array.from(assignSel);
   const player_id = $("#assignPlayer").value
     ? parseInt($("#assignPlayer").value, 10)
     : null;
   const modes = {};
-  cont.querySelectorAll("select").forEach((s) => {
-    const id = parseInt(s.dataset.vid, 10);
-    if (vehicle_ids.includes(id)) modes[id] = s.value;
-  });
+  for (const id of vehicle_ids) {
+    if (assignSelModes[id] != null) modes[id] = assignSelModes[id];
+  }
   try {
     sendNotesAsync(modalEvent);
     await api("events_assign", {
